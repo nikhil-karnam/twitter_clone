@@ -6,16 +6,22 @@ import "os"
 import "strconv"
 import "sort"
 import "math/rand"
+import "maps"
+import "slices"
 import "context"
 import "encoding/json"
 import "github.com/redis/go-redis/v9"
 import "github.com/cockroachdb/pebble"
+import "google.golang.org/grpc"
+import "google.golang.org/grpc/credentials/insecure"
+import pb "twitter_clone/tweets"
 
 var writeMode = pebble.Sync
 
 var users *pebble.DB
 var follows *pebble.DB
-var tweets *pebble.DB
+var tweets [3]pb.TweetsClient
+var tweetAddrs = [3]string{"localhost:50051", "localhost:50052", "localhost:50053"}
 
 type Mail struct {
 	User	string
@@ -57,6 +63,30 @@ func Tweet(user, tweet string) {
 	}
 
 	now := time.Now()
+	
+	results := make(chan error, 3)
+	for _, db := range tweets {
+		go func(db pb.TweetsClient) {
+			_, err := db.Put(ctx, &pb.PutRequest{
+				Key: []byte(user+":"+fmt.Sprintf("%020d", now.UnixNano())), 
+				Value: []byte(tweet), Sync: writeMode == pebble.Sync,
+			})
+			results <- err
+		}(db)
+	}
+	passes := 0
+	for i := 0; i < 3; i++ {
+		//waits until result arrives
+		err := <-results
+		if err == nil {
+			passes++
+		}
+	}
+	//quorum failed, don't tweet
+	if passes < 2{
+		return
+	}
+
 	if GetFollowerCount(user) < celeb_min {
 		iter, _ := follows.NewIter(&pebble.IterOptions{
 			LowerBound: []byte("follower:" + user + ":"),
@@ -74,7 +104,41 @@ func Tweet(user, tweet string) {
 		pipe.Exec(ctx)
 		iter.Close()
 	}
-	tweets.Set([]byte(user+":"+fmt.Sprintf("%020d", now.UnixNano())), []byte(tweet), writeMode)
+}
+
+func Reconcile() {
+	//using an in memory map to save repeated reads to the disk
+	all := map[string][]byte{}
+	var ram_copies [3]map[string]bool
+	for i := range tweets {
+		ram_copies[i] = map[string]bool{}
+		stream, err := tweets[i].Scan(ctx, &pb.ScanRequest{})
+		if err != nil {
+			continue
+		}
+		for {
+			kv, err := stream.Recv()
+			if err != nil {
+				break
+			}
+			all[string(kv.Key)] = kv.Value
+			ram_copies[i][string(kv.Key)] = true
+		}
+	}
+	//for each of the 3 copies we turned into maps in memory
+	for i := range tweets {
+		//if it's missing from the master map, batch it and add the batch to disk
+		//batch saves repeated writes to the disk
+		var missing []*pb.KV
+		for key, value := range all {
+			if !ram_copies[i][key] {
+				missing = append(missing, &pb.KV{Key: []byte(key), Value: value})
+			}
+		}
+		if len(missing) > 0 {
+			tweets[i].PutBatch(ctx, &pb.PutBatchRequest{Kvs: missing})
+		}
+	}
 }
 
 //getters
@@ -133,16 +197,30 @@ func GetFollowing(user string) {
 }
 
 func GetProfile(user string) {
-	iter, _ := tweets.NewIter(&pebble.IterOptions{
-		LowerBound: []byte(user + ":"),
-		UpperBound: []byte(user + ";"),
-	})
-	for iter.First(); iter.Valid(); iter.Next() {
-		nanos, _ := strconv.ParseInt(string(iter.Key()[len(user+":"):]), 10, 64)
-		PrintTime(nanos)
-		fmt.Println(string(iter.Value()))
+	//naw screw 3 pointer merge sort. we just put everything into a map from all 3 db and sort
+	all := map[string]string{}
+	for _, db := range tweets {
+		stream, err := db.Scan(ctx, &pb.ScanRequest{
+			Lower: []byte(user + ":"),
+			Upper: []byte(user + ";"),
+		})
+		if err != nil {
+			continue
+		}
+		for {
+			kv, err := stream.Recv()
+			if err != nil {
+				break
+			}
+			all[string(kv.Key)] = string(kv.Value)
+		}
 	}
-	iter.Close()
+
+	for _, k := range slices.Sorted(maps.Keys(all)) {
+		nanos, _ := strconv.ParseInt(k[len(user+":"):], 10, 64)
+		PrintTime(nanos)
+		fmt.Println(all[k])
+	}
 }
 
 func OpenMail(user string) {
@@ -162,19 +240,29 @@ func OpenMail(user string) {
 	//for every followee
 	for iter.First(); iter.Valid(); iter.Next() {
 		followee := string(iter.Key()[len("following:"+user+":"):])
-		//collect the celeb's tweets as a mail struct
-		//OR if redis is down collect all followee's tweets anyways
+		//collect the celeb's latest tweet as a mail struct
+		//OR if redis is down collect each followee's latest tweet anyways
 		if redisErr != nil || GetFollowerCount(followee) >= celeb_min {
-			tweetIter, _ := tweets.NewIter(&pebble.IterOptions{
-				LowerBound: []byte(followee + ":"),
-				UpperBound: []byte(followee + ";"),
-			})
-			//if a tweet of theirs exists
-			if tweetIter.Last() {
-				nanos, _ := strconv.ParseInt(string(tweetIter.Key()[len(followee+":"):]), 10, 64)
-				celebTweets = append(celebTweets, Mail{followee, string(tweetIter.Value()), nanos})
+			var newest Mail
+			has_tweeted := false
+			//if one db is still recovery we don't know which is latest
+			//check all 3 dbs to determine latest
+			for _, db := range tweets {
+				reply, err := db.Last(ctx, &pb.ScanRequest{
+					Lower: []byte(followee + ":"),
+					Upper: []byte(followee + ";"),
+				})
+				if err == nil && reply.Found {
+					nanos, _ := strconv.ParseInt(string(reply.Kv.Key[len(followee+":"):]), 10, 64)
+					if !has_tweeted || nanos > newest.Time {
+						newest = Mail{followee, string(reply.Kv.Value), nanos}
+						has_tweeted = true
+					}
+				}
 			}
-			tweetIter.Close()
+			if has_tweeted {
+				celebTweets = append(celebTweets, newest)
+			}
 		}
 	}
 	iter.Close()
@@ -230,7 +318,9 @@ func Setup() {
 
 	users.Flush()
 	follows.Flush()
-	tweets.Flush()
+	for _, db := range tweets {
+		db.Flush(ctx, &pb.FlushRequest{})
+	}
 	writeMode = pebble.Sync
 }
 
@@ -273,14 +363,27 @@ func Benchmark() {
 func main() {
 	users, _ = pebble.Open("data/users", &pebble.Options{})
 	follows, _ = pebble.Open("data/follows", &pebble.Options{})
-	tweets, _ = pebble.Open("data/tweets", &pebble.Options{})
-
-	//defer closes when program is finished
+	for i, addr := range tweetAddrs {
+		conn, _ := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		//defer closes when program is finished
+		defer conn.Close()
+		tweets[i] = pb.NewTweetsClient(conn)
+	}
 	defer users.Close()
 	defer follows.Close()
-	defer tweets.Close()
+
+	//runs repairs in the background
+	/*go func() {
+		for {
+			Reconcile()
+			time.Sleep(10 * time.Second)
+		}
+	}()*/
 
 	//Setup()
-	Benchmark()
-	//OpenMail("user0")
+	//Benchmark()
+	start := time.Now()
+Reconcile()
+fmt.Println("restore took:", time.Since(start))
+	
 }
