@@ -47,4 +47,4 @@ go run ./tweetserver data/tweets1 :50052
 go run ./tweetserver data/tweets2 :50053
 ```
 
-Then uncomment `Setup()` in `main.go` and run `go run .` once, then comment it out, uncomment `Benchmark()`, and run `go run .` again.
+Then run `go run .`.
