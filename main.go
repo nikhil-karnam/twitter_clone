@@ -350,8 +350,8 @@ func Benchmark() {
 
 		fmt.Println(names[s], "normal tweet:", p99(1000, func(i int) { Tweet("user"+strconv.Itoa(i), "hello") }))
 		
-		fmt.Println(names[s], "celeb tweet:", p99(10, func(i int) { Tweet("celeb"+strconv.Itoa(i), "hello") }))
-
+		fmt.Println(names[s], "celeb tweet:", p99(100, func(i int) { Tweet("celeb"+strconv.Itoa(i%10), "hello") }))
+		
 		os.Stdout = devNull
 		t := p99(1000, func(i int) { OpenMail("user" + strconv.Itoa(i)) })
 		os.Stdout = realStdout
@@ -380,6 +380,6 @@ func main() {
 		}
 	}()*/
 
-	//Setup()
-	//Benchmark()
+	Setup()
+	Benchmark()
 }
