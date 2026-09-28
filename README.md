@@ -1,4 +1,7 @@
-A Twitter clone in Go using hybrid fan-out, with LSM trees (Pebble) for storage and Redis for cache.
+Twitter Clone\
+A Go backend with hybrid fan-out, replicated LSM storage (Pebble), and a Redis feed cache.
+
+---
 
 Twitter is read-heavy. Many more users are opening their feed (home page) than users are tweeting every second.\
 Opening feeds can be slow across thousands of users when searching the log for all followees and obtaining their latest post.\
@@ -9,17 +12,39 @@ The cache exists on Redis, capped at the latest 20 tweets, and tweeting prepares
 
 With this hybrid fan-out solution, most reads now happen through the cache, making the app write-heavy. This is why I chose to use an LSM for storing all tweets, because it's faster for writing compared to a B-tree, which is faster for read-heavy apps.
 
+This program also allows you to load a specific user's profile. This directly pulls their tweets from the LSM. The LSM is useful because all tweets by a user are sorted and next to each other, but reading in general is not the most efficient. This is okay because I am assuming loading specific profiles happens less frequently than writing tweets in general.
+
+---
+
+Finally, replicating the tweet database. The code was originally written for a single Pebble database and now runs three naive replicas. The idea is that if one database dies, the others act as backups. The nodes are leaderless, and writes use a quorum: at least two nodes must store a tweet before it's considered posted. Only then does it get sent to the mailboxes. Why does the mailbox come second? If the main program dies before delivering to the mailboxes, the tweet won't show up in feeds, but it still exists in storage. That's a better scenario than a mailbox showing a tweet that doesn't exist in storage. If a node dies and comes back, replica reconciliation repairs it. This is the core mechanism Twitter's Manhattan database uses to keep its replicas consistent.
+
+Each node runs as its own program and talks to the main program over gRPC. Twitter uses its own RPC framework, Finagle. Originally, Pebble databases ran from inside my main program, but I had to move them to separate servers to be able to kill a single node and test replication and reconciliation.
+
+---
+
 p99 results with 10K users, 10 celebs, and 1.1M follows:
 
 | | Normal tweet | Celeb tweet | Open feed |
 |---|---|---|---|
-| Hybrid | 7.5ms | 3.4ms | 1.93ms |
-| Mail to everyone | 10.2ms | 133ms | 2.71ms |
-| Mail to no one | 8.0ms | 7.6ms | 2.84ms |
+| Hybrid | 7.3ms | 4.7ms | 11.7ms |
+| Mail to everyone | 6.8ms | 90ms | 4.28ms |
+| Mail to no one | 6.9ms | 6.8ms | 116ms |
 
-Hybrid makes celeb posts 22× faster than mailing everyone, which makes sense because you're not sending to thousands of mailboxes.
-And loading feeds is 2x faster than mailing no one, which makes sense because you can load cache instead of having to search through the LSM to pull every followee's tweets.
+Hybrid makes celeb posts 19× faster than mailing everyone, which makes sense because you're not sending to thousands of mailboxes.\
+And loading feeds is 10x faster than mailing no one, which makes sense because you can load cache instead of having to search through the LSM to pull every followee's tweets.
 
-This program also allows you to load a specific user's profile. This directly pulls their tweets from the LSM. The LSM is useful because all tweets by a user are sorted and next to each other, but reading in general is not the most efficient. This is okay because I am assuming loading specific profiles happens less frequently than writing tweets in general.
+With one node dead, 10000 tweets were successfully posted with zero lost.\
+Reconciliation repaired all 10000 in 222ms, down from 67s after switching to in-memory comparisons and batched writes.
 
-To run: start Redis, uncomment `Setup()` in `main.go` and run `go run .` once, then comment it out, uncomment `Benchmark()`, and run `go run .` again.
+---
+
+To run:\
+start Redis, then start the three tweet nodes in separate terminals
+
+```bash
+go run ./tweetserver data/tweets0 :50051
+go run ./tweetserver data/tweets1 :50052
+go run ./tweetserver data/tweets2 :50053
+```
+
+Then uncomment `Setup()` in `main.go` and run `go run .` once, then comment it out, uncomment `Benchmark()`, and run `go run .` again.
