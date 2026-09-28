@@ -382,8 +382,4 @@ func main() {
 
 	//Setup()
 	//Benchmark()
-	start := time.Now()
-Reconcile()
-fmt.Println("restore took:", time.Since(start))
-	
 }
