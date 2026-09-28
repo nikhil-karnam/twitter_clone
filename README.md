@@ -1,5 +1,5 @@
 Twitter Clone\
-A Go backend with hybrid fan-out, replicated LSM storage (Pebble), and a Redis feed cache.
+Written in Go with hybrid fan-out, replicated LSM storage (Pebble), and a Redis feed cache.
 
 ---
 
