@@ -234,6 +234,17 @@ func Setup() {
 	writeMode = pebble.Sync
 }
 
+func p99(n int, f func(i int)) time.Duration {
+	times := make([]time.Duration, n)
+	for i := 0; i < n; i++ {
+		start := time.Now()
+		f(i)
+		times[i] = time.Since(start)
+	}
+	sort.Slice(times, func(a, b int) bool { return times[a] < times[b] })
+	return times[(n*99+99)/100-1]
+}
+
 func Benchmark() {
 	realStdout := os.Stdout
 	devNull, _ := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
@@ -247,27 +258,17 @@ func Benchmark() {
 			rdb.FlushAll(ctx)
 		}
 
-		start := time.Now()
-		for i := 0; i < 1000; i++ {
-			Tweet("user"+strconv.Itoa(i), "hello")
-		}
-		fmt.Println(names[s], "normal tweet:", time.Since(start)/1000)
-
-		start = time.Now()
-		for i := 0; i < 10; i++ {
-			Tweet("celeb"+strconv.Itoa(i), "hello")
-		}
-		fmt.Println(names[s], "celeb tweet:", time.Since(start)/10)
+		fmt.Println(names[s], "normal tweet:", p99(1000, func(i int) { Tweet("user"+strconv.Itoa(i), "hello") }))
+		
+		fmt.Println(names[s], "celeb tweet:", p99(10, func(i int) { Tweet("celeb"+strconv.Itoa(i), "hello") }))
 
 		os.Stdout = devNull
-		start = time.Now()
-		for i := 0; i < 1000; i++ {
-			OpenMail("user" + strconv.Itoa(i))
-		}
+		t := p99(1000, func(i int) { OpenMail("user" + strconv.Itoa(i)) })
 		os.Stdout = realStdout
-		fmt.Println(names[s], "open feed:", time.Since(start)/1000)
+		fmt.Println(names[s], "open feed:", t)
 	}
 }
+
 
 func main() {
 	users, _ = pebble.Open("data/users", &pebble.Options{})
@@ -280,6 +281,6 @@ func main() {
 	defer tweets.Close()
 
 	//Setup()
-	//Benchmark()
-	OpenMail("user0")
+	Benchmark()
+	//OpenMail("user0")
 }
