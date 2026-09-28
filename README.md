@@ -9,13 +9,13 @@ The cache exists on Redis, capped at the latest 20 tweets, and tweeting prepares
 
 With this hybrid fan-out solution, most reads now happen through the cache, making the app write-heavy. This is why I chose to use an LSM for storing all tweets, because it's faster for writing compared to a B-tree, which is faster for read-heavy apps.
 
-Average results with 10K users, 10 celebs, and 1.1M follows:
+p99 results with 10K users, 10 celebs, and 1.1M follows:
 
 | | Normal tweet | Celeb tweet | Open feed |
 |---|---|---|---|
-| Hybrid | 4.0ms | 2.9ms | 0.60ms |
-| Mail to everyone | 3.3ms | 64ms | 0.55ms |
-| Mail to no one | 3.7ms | 3.7ms | 1.22ms |
+| Hybrid | 7.5ms | 3.4ms | 1.93ms |
+| Mail to everyone | 10.2ms | 133ms | 2.71ms |
+| Mail to no one | 8.0ms | 7.6ms | 2.84ms |
 
 Hybrid makes celeb posts 22× faster than mailing everyone, which makes sense because you're not sending to thousands of mailboxes.
 And loading feeds is 2x faster than mailing no one, which makes sense because you can load cache instead of having to search through the LSM to pull every followee's tweets.
