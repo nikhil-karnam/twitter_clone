@@ -321,9 +321,6 @@ func Setup() {
 
 	users.Flush()
 	follows.Flush()
-	for _, db := range tweets {
-		db.Flush(ctx, &pb.FlushRequest{})
-	}
 	writeMode = pebble.Sync
 }
 
