@@ -17,10 +17,6 @@ type server struct {
 	db *pebble.DB
 }
 
-func (s *server) Flush(ctx context.Context, req *pb.FlushRequest) (*pb.FlushReply, error) {
-	return &pb.FlushReply{}, s.db.Flush()
-}
-
 func (s *server) Put(ctx context.Context, req *pb.PutRequest) (*pb.PutReply, error) {
 	mode := pebble.NoSync
 	if req.Sync {

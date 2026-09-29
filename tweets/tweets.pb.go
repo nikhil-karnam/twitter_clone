@@ -21,78 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type FlushRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FlushRequest) Reset() {
-	*x = FlushRequest{}
-	mi := &file_tweets_tweets_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FlushRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FlushRequest) ProtoMessage() {}
-
-func (x *FlushRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tweets_tweets_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FlushRequest.ProtoReflect.Descriptor instead.
-func (*FlushRequest) Descriptor() ([]byte, []int) {
-	return file_tweets_tweets_proto_rawDescGZIP(), []int{0}
-}
-
-type FlushReply struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FlushReply) Reset() {
-	*x = FlushReply{}
-	mi := &file_tweets_tweets_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FlushReply) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FlushReply) ProtoMessage() {}
-
-func (x *FlushReply) ProtoReflect() protoreflect.Message {
-	mi := &file_tweets_tweets_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FlushReply.ProtoReflect.Descriptor instead.
-func (*FlushReply) Descriptor() ([]byte, []int) {
-	return file_tweets_tweets_proto_rawDescGZIP(), []int{1}
-}
-
 type PutRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Key           []byte                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
@@ -104,7 +32,7 @@ type PutRequest struct {
 
 func (x *PutRequest) Reset() {
 	*x = PutRequest{}
-	mi := &file_tweets_tweets_proto_msgTypes[2]
+	mi := &file_tweets_tweets_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -116,7 +44,7 @@ func (x *PutRequest) String() string {
 func (*PutRequest) ProtoMessage() {}
 
 func (x *PutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tweets_tweets_proto_msgTypes[2]
+	mi := &file_tweets_tweets_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -129,7 +57,7 @@ func (x *PutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutRequest.ProtoReflect.Descriptor instead.
 func (*PutRequest) Descriptor() ([]byte, []int) {
-	return file_tweets_tweets_proto_rawDescGZIP(), []int{2}
+	return file_tweets_tweets_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *PutRequest) GetKey() []byte {
@@ -161,7 +89,7 @@ type PutReply struct {
 
 func (x *PutReply) Reset() {
 	*x = PutReply{}
-	mi := &file_tweets_tweets_proto_msgTypes[3]
+	mi := &file_tweets_tweets_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -173,7 +101,7 @@ func (x *PutReply) String() string {
 func (*PutReply) ProtoMessage() {}
 
 func (x *PutReply) ProtoReflect() protoreflect.Message {
-	mi := &file_tweets_tweets_proto_msgTypes[3]
+	mi := &file_tweets_tweets_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -186,7 +114,7 @@ func (x *PutReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutReply.ProtoReflect.Descriptor instead.
 func (*PutReply) Descriptor() ([]byte, []int) {
-	return file_tweets_tweets_proto_rawDescGZIP(), []int{3}
+	return file_tweets_tweets_proto_rawDescGZIP(), []int{1}
 }
 
 type GetRequest struct {
@@ -198,7 +126,7 @@ type GetRequest struct {
 
 func (x *GetRequest) Reset() {
 	*x = GetRequest{}
-	mi := &file_tweets_tweets_proto_msgTypes[4]
+	mi := &file_tweets_tweets_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -210,7 +138,7 @@ func (x *GetRequest) String() string {
 func (*GetRequest) ProtoMessage() {}
 
 func (x *GetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tweets_tweets_proto_msgTypes[4]
+	mi := &file_tweets_tweets_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -223,7 +151,7 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return file_tweets_tweets_proto_rawDescGZIP(), []int{4}
+	return file_tweets_tweets_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetRequest) GetKey() []byte {
@@ -243,7 +171,7 @@ type GetReply struct {
 
 func (x *GetReply) Reset() {
 	*x = GetReply{}
-	mi := &file_tweets_tweets_proto_msgTypes[5]
+	mi := &file_tweets_tweets_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -255,7 +183,7 @@ func (x *GetReply) String() string {
 func (*GetReply) ProtoMessage() {}
 
 func (x *GetReply) ProtoReflect() protoreflect.Message {
-	mi := &file_tweets_tweets_proto_msgTypes[5]
+	mi := &file_tweets_tweets_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -268,7 +196,7 @@ func (x *GetReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetReply.ProtoReflect.Descriptor instead.
 func (*GetReply) Descriptor() ([]byte, []int) {
-	return file_tweets_tweets_proto_rawDescGZIP(), []int{5}
+	return file_tweets_tweets_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetReply) GetFound() bool {
@@ -295,7 +223,7 @@ type ScanRequest struct {
 
 func (x *ScanRequest) Reset() {
 	*x = ScanRequest{}
-	mi := &file_tweets_tweets_proto_msgTypes[6]
+	mi := &file_tweets_tweets_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -307,7 +235,7 @@ func (x *ScanRequest) String() string {
 func (*ScanRequest) ProtoMessage() {}
 
 func (x *ScanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tweets_tweets_proto_msgTypes[6]
+	mi := &file_tweets_tweets_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -320,7 +248,7 @@ func (x *ScanRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ScanRequest.ProtoReflect.Descriptor instead.
 func (*ScanRequest) Descriptor() ([]byte, []int) {
-	return file_tweets_tweets_proto_rawDescGZIP(), []int{6}
+	return file_tweets_tweets_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ScanRequest) GetLower() []byte {
@@ -347,7 +275,7 @@ type KV struct {
 
 func (x *KV) Reset() {
 	*x = KV{}
-	mi := &file_tweets_tweets_proto_msgTypes[7]
+	mi := &file_tweets_tweets_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -359,7 +287,7 @@ func (x *KV) String() string {
 func (*KV) ProtoMessage() {}
 
 func (x *KV) ProtoReflect() protoreflect.Message {
-	mi := &file_tweets_tweets_proto_msgTypes[7]
+	mi := &file_tweets_tweets_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -372,7 +300,7 @@ func (x *KV) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KV.ProtoReflect.Descriptor instead.
 func (*KV) Descriptor() ([]byte, []int) {
-	return file_tweets_tweets_proto_rawDescGZIP(), []int{7}
+	return file_tweets_tweets_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *KV) GetKey() []byte {
@@ -399,7 +327,7 @@ type LastReply struct {
 
 func (x *LastReply) Reset() {
 	*x = LastReply{}
-	mi := &file_tweets_tweets_proto_msgTypes[8]
+	mi := &file_tweets_tweets_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -411,7 +339,7 @@ func (x *LastReply) String() string {
 func (*LastReply) ProtoMessage() {}
 
 func (x *LastReply) ProtoReflect() protoreflect.Message {
-	mi := &file_tweets_tweets_proto_msgTypes[8]
+	mi := &file_tweets_tweets_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -424,7 +352,7 @@ func (x *LastReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LastReply.ProtoReflect.Descriptor instead.
 func (*LastReply) Descriptor() ([]byte, []int) {
-	return file_tweets_tweets_proto_rawDescGZIP(), []int{8}
+	return file_tweets_tweets_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *LastReply) GetFound() bool {
@@ -450,7 +378,7 @@ type PutBatchRequest struct {
 
 func (x *PutBatchRequest) Reset() {
 	*x = PutBatchRequest{}
-	mi := &file_tweets_tweets_proto_msgTypes[9]
+	mi := &file_tweets_tweets_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -462,7 +390,7 @@ func (x *PutBatchRequest) String() string {
 func (*PutBatchRequest) ProtoMessage() {}
 
 func (x *PutBatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_tweets_tweets_proto_msgTypes[9]
+	mi := &file_tweets_tweets_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -475,7 +403,7 @@ func (x *PutBatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutBatchRequest.ProtoReflect.Descriptor instead.
 func (*PutBatchRequest) Descriptor() ([]byte, []int) {
-	return file_tweets_tweets_proto_rawDescGZIP(), []int{9}
+	return file_tweets_tweets_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PutBatchRequest) GetKvs() []*KV {
@@ -489,10 +417,7 @@ var File_tweets_tweets_proto protoreflect.FileDescriptor
 
 const file_tweets_tweets_proto_rawDesc = "" +
 	"\n" +
-	"\x13tweets/tweets.proto\x12\x06tweets\"\x0e\n" +
-	"\fFlushRequest\"\f\n" +
-	"\n" +
-	"FlushReply\"H\n" +
+	"\x13tweets/tweets.proto\x12\x06tweets\"H\n" +
 	"\n" +
 	"PutRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\fR\x03key\x12\x14\n" +
@@ -518,9 +443,8 @@ const file_tweets_tweets_proto_rawDesc = "" +
 	".tweets.KVR\x02kv\"/\n" +
 	"\x0fPutBatchRequest\x12\x1c\n" +
 	"\x03kvs\x18\x01 \x03(\v2\n" +
-	".tweets.KVR\x03kvs2\xa7\x02\n" +
-	"\x06Tweets\x121\n" +
-	"\x05Flush\x12\x14.tweets.FlushRequest\x1a\x12.tweets.FlushReply\x12+\n" +
+	".tweets.KVR\x03kvs2\xf4\x01\n" +
+	"\x06Tweets\x12+\n" +
 	"\x03Put\x12\x12.tweets.PutRequest\x1a\x10.tweets.PutReply\x12+\n" +
 	"\x03Get\x12\x12.tweets.GetRequest\x1a\x10.tweets.GetReply\x12)\n" +
 	"\x04Scan\x12\x13.tweets.ScanRequest\x1a\n" +
@@ -540,36 +464,32 @@ func file_tweets_tweets_proto_rawDescGZIP() []byte {
 	return file_tweets_tweets_proto_rawDescData
 }
 
-var file_tweets_tweets_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_tweets_tweets_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_tweets_tweets_proto_goTypes = []any{
-	(*FlushRequest)(nil),    // 0: tweets.FlushRequest
-	(*FlushReply)(nil),      // 1: tweets.FlushReply
-	(*PutRequest)(nil),      // 2: tweets.PutRequest
-	(*PutReply)(nil),        // 3: tweets.PutReply
-	(*GetRequest)(nil),      // 4: tweets.GetRequest
-	(*GetReply)(nil),        // 5: tweets.GetReply
-	(*ScanRequest)(nil),     // 6: tweets.ScanRequest
-	(*KV)(nil),              // 7: tweets.KV
-	(*LastReply)(nil),       // 8: tweets.LastReply
-	(*PutBatchRequest)(nil), // 9: tweets.PutBatchRequest
+	(*PutRequest)(nil),      // 0: tweets.PutRequest
+	(*PutReply)(nil),        // 1: tweets.PutReply
+	(*GetRequest)(nil),      // 2: tweets.GetRequest
+	(*GetReply)(nil),        // 3: tweets.GetReply
+	(*ScanRequest)(nil),     // 4: tweets.ScanRequest
+	(*KV)(nil),              // 5: tweets.KV
+	(*LastReply)(nil),       // 6: tweets.LastReply
+	(*PutBatchRequest)(nil), // 7: tweets.PutBatchRequest
 }
 var file_tweets_tweets_proto_depIdxs = []int32{
-	7, // 0: tweets.LastReply.kv:type_name -> tweets.KV
-	7, // 1: tweets.PutBatchRequest.kvs:type_name -> tweets.KV
-	0, // 2: tweets.Tweets.Flush:input_type -> tweets.FlushRequest
-	2, // 3: tweets.Tweets.Put:input_type -> tweets.PutRequest
-	4, // 4: tweets.Tweets.Get:input_type -> tweets.GetRequest
-	6, // 5: tweets.Tweets.Scan:input_type -> tweets.ScanRequest
-	6, // 6: tweets.Tweets.Last:input_type -> tweets.ScanRequest
-	9, // 7: tweets.Tweets.PutBatch:input_type -> tweets.PutBatchRequest
-	1, // 8: tweets.Tweets.Flush:output_type -> tweets.FlushReply
-	3, // 9: tweets.Tweets.Put:output_type -> tweets.PutReply
-	5, // 10: tweets.Tweets.Get:output_type -> tweets.GetReply
-	7, // 11: tweets.Tweets.Scan:output_type -> tweets.KV
-	8, // 12: tweets.Tweets.Last:output_type -> tweets.LastReply
-	3, // 13: tweets.Tweets.PutBatch:output_type -> tweets.PutReply
-	8, // [8:14] is the sub-list for method output_type
-	2, // [2:8] is the sub-list for method input_type
+	5, // 0: tweets.LastReply.kv:type_name -> tweets.KV
+	5, // 1: tweets.PutBatchRequest.kvs:type_name -> tweets.KV
+	0, // 2: tweets.Tweets.Put:input_type -> tweets.PutRequest
+	2, // 3: tweets.Tweets.Get:input_type -> tweets.GetRequest
+	4, // 4: tweets.Tweets.Scan:input_type -> tweets.ScanRequest
+	4, // 5: tweets.Tweets.Last:input_type -> tweets.ScanRequest
+	7, // 6: tweets.Tweets.PutBatch:input_type -> tweets.PutBatchRequest
+	1, // 7: tweets.Tweets.Put:output_type -> tweets.PutReply
+	3, // 8: tweets.Tweets.Get:output_type -> tweets.GetReply
+	5, // 9: tweets.Tweets.Scan:output_type -> tweets.KV
+	6, // 10: tweets.Tweets.Last:output_type -> tweets.LastReply
+	1, // 11: tweets.Tweets.PutBatch:output_type -> tweets.PutReply
+	7, // [7:12] is the sub-list for method output_type
+	2, // [2:7] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
@@ -586,7 +506,7 @@ func file_tweets_tweets_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_tweets_tweets_proto_rawDesc), len(file_tweets_tweets_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

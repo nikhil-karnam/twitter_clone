@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Tweets_Flush_FullMethodName    = "/tweets.Tweets/Flush"
 	Tweets_Put_FullMethodName      = "/tweets.Tweets/Put"
 	Tweets_Get_FullMethodName      = "/tweets.Tweets/Get"
 	Tweets_Scan_FullMethodName     = "/tweets.Tweets/Scan"
@@ -31,7 +30,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TweetsClient interface {
-	Flush(ctx context.Context, in *FlushRequest, opts ...grpc.CallOption) (*FlushReply, error)
 	Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutReply, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetReply, error)
 	Scan(ctx context.Context, in *ScanRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[KV], error)
@@ -45,16 +43,6 @@ type tweetsClient struct {
 
 func NewTweetsClient(cc grpc.ClientConnInterface) TweetsClient {
 	return &tweetsClient{cc}
-}
-
-func (c *tweetsClient) Flush(ctx context.Context, in *FlushRequest, opts ...grpc.CallOption) (*FlushReply, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(FlushReply)
-	err := c.cc.Invoke(ctx, Tweets_Flush_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *tweetsClient) Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutReply, error) {
@@ -120,7 +108,6 @@ func (c *tweetsClient) PutBatch(ctx context.Context, in *PutBatchRequest, opts .
 // All implementations must embed UnimplementedTweetsServer
 // for forward compatibility.
 type TweetsServer interface {
-	Flush(context.Context, *FlushRequest) (*FlushReply, error)
 	Put(context.Context, *PutRequest) (*PutReply, error)
 	Get(context.Context, *GetRequest) (*GetReply, error)
 	Scan(*ScanRequest, grpc.ServerStreamingServer[KV]) error
@@ -136,9 +123,6 @@ type TweetsServer interface {
 // pointer dereference when methods are called.
 type UnimplementedTweetsServer struct{}
 
-func (UnimplementedTweetsServer) Flush(context.Context, *FlushRequest) (*FlushReply, error) {
-	return nil, status.Error(codes.Unimplemented, "method Flush not implemented")
-}
 func (UnimplementedTweetsServer) Put(context.Context, *PutRequest) (*PutReply, error) {
 	return nil, status.Error(codes.Unimplemented, "method Put not implemented")
 }
@@ -173,24 +157,6 @@ func RegisterTweetsServer(s grpc.ServiceRegistrar, srv TweetsServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&Tweets_ServiceDesc, srv)
-}
-
-func _Tweets_Flush_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FlushRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TweetsServer).Flush(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Tweets_Flush_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TweetsServer).Flush(ctx, req.(*FlushRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Tweets_Put_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -283,10 +249,6 @@ var Tweets_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "tweets.Tweets",
 	HandlerType: (*TweetsServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Flush",
-			Handler:    _Tweets_Flush_Handler,
-		},
 		{
 			MethodName: "Put",
 			Handler:    _Tweets_Put_Handler,

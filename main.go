@@ -82,7 +82,7 @@ func Tweet(user, tweet string) {
 			passes++
 		}
 	}
-	//quorum failed, don't tweet
+	//quorum failed, don't mail
 	if passes < 2{
 		return
 	}
@@ -196,13 +196,13 @@ func GetFollowing(user string) {
 	iter.Close()
 }
 
-func GetProfile(user string) {
+func GetProfile(user, target string) {
 	//naw screw 3 pointer merge sort. we just put everything into a map from all 3 db and sort
 	all := map[string]string{}
 	for _, db := range tweets {
 		stream, err := db.Scan(ctx, &pb.ScanRequest{
-			Lower: []byte(user + ":"),
-			Upper: []byte(user + ";"),
+			Lower: []byte(target + ":"),
+			Upper: []byte(target + ";"),
 		})
 		if err != nil {
 			continue
@@ -215,9 +215,18 @@ func GetProfile(user string) {
 			all[string(kv.Key)] = string(kv.Value)
 		}
 	}
+	//merging the feed with the profile in case there's inconsistency
+	texts, _ := rdb.LRange(ctx, "mailbox:"+user, 0, -1).Result()
+	for _, text := range texts {
+		var mail Mail
+		json.Unmarshal([]byte(text), &mail)
+		if mail.User == target {
+			all[target+":"+fmt.Sprintf("%020d", mail.Time)] = mail.Tweet
+		}
+	}
 
 	for _, k := range slices.Sorted(maps.Keys(all)) {
-		nanos, _ := strconv.ParseInt(k[len(user+":"):], 10, 64)
+		nanos, _ := strconv.ParseInt(k[len(target+":"):], 10, 64)
 		PrintTime(nanos)
 		fmt.Println(all[k])
 	}
@@ -284,11 +293,11 @@ func OpenMail(user string) {
 	}
 }
 
-//creates 10k users and 10 celebs. each user follows 100 randos and all celebs.
-//everyone tweets once so feeds have real tweets to fetch
 func Setup() {
+	//speed up process
 	writeMode = pebble.NoSync
 
+	//creates 10k users and 10 celebs.
 	for i := 0; i < 10000; i++ {
 		CreateUser("user" + strconv.Itoa(i))
 	}
@@ -296,6 +305,7 @@ func Setup() {
 		CreateUser("celeb" + strconv.Itoa(i))
 	}
 
+	//each user follows 100 randos + all celebs = 110 follows
 	for i := 0; i < 10000; i++ {
 		user := "user" + strconv.Itoa(i)
 		for k := 0; k < 100; k++ {
@@ -309,19 +319,37 @@ func Setup() {
 		}
 	}
 
-	for i := 0; i < 10000; i++ {
-		Tweet("user"+strconv.Itoa(i), "hello")
-	}
-	for i := 0; i < 10; i++ {
-		Tweet("celeb"+strconv.Itoa(i), "hello")
-	}
-
 	users.Flush()
 	follows.Flush()
 	for _, db := range tweets {
 		db.Flush(ctx, &pb.FlushRequest{})
 	}
 	writeMode = pebble.Sync
+}
+
+func Benchmark() {
+	realStdout := os.Stdout
+	devNull, _ := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
+
+	names := []string{"hybrid", "mail to everyone", "mail to no one"}
+	celeb_mins := []int{1000, 1 << 14, 0}
+
+	for s := 0; s < 3; s++ {
+		if names[s] == "mail to no one" {
+			rdb.FlushAll(ctx)
+		}
+		
+		celeb_min = celeb_mins[s]
+
+		fmt.Println(names[s], "normal tweet:", p99(1000, func(i int) { Tweet("user"+strconv.Itoa(rand.Intn(10000)), "hello") }))
+		
+		fmt.Println(names[s], "celeb tweet:", p99(100, func(i int) { Tweet("celeb"+strconv.Itoa(i%10), "hello") }))
+		
+		os.Stdout = devNull
+		t := p99(1000, func(i int) { OpenMail("user" + strconv.Itoa(rand.Intn(10000))) })
+		os.Stdout = realStdout
+		fmt.Println(names[s], "open feed:", t)
+	}
 }
 
 func p99(n int, f func(i int)) time.Duration {
@@ -333,30 +361,6 @@ func p99(n int, f func(i int)) time.Duration {
 	}
 	sort.Slice(times, func(a, b int) bool { return times[a] < times[b] })
 	return times[(n*99+99)/100-1]
-}
-
-func Benchmark() {
-	realStdout := os.Stdout
-	devNull, _ := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
-
-	names := []string{"hybrid", "mail to everyone", "mail to no one"}
-	celeb_mins := []int{1000, 1 << 14, 0}
-
-	for s := 0; s < 3; s++ {
-		celeb_min = celeb_mins[s]
-		if names[s] == "mail to no one" {
-			rdb.FlushAll(ctx)
-		}
-
-		fmt.Println(names[s], "normal tweet:", p99(1000, func(i int) { Tweet("user"+strconv.Itoa(i), "hello") }))
-		
-		fmt.Println(names[s], "celeb tweet:", p99(100, func(i int) { Tweet("celeb"+strconv.Itoa(i%10), "hello") }))
-		
-		os.Stdout = devNull
-		t := p99(1000, func(i int) { OpenMail("user" + strconv.Itoa(i)) })
-		os.Stdout = realStdout
-		fmt.Println(names[s], "open feed:", t)
-	}
 }
 
 

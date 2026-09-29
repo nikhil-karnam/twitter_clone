@@ -5,16 +5,12 @@ package tweets;
 option go_package = "twitter_clone/tweets";
 
 service Tweets {
-  rpc Flush(FlushRequest) returns (FlushReply);
   rpc Put(PutRequest) returns (PutReply);
   rpc Get(GetRequest) returns (GetReply);
   rpc Scan(ScanRequest) returns (stream KV);
   rpc Last(ScanRequest) returns (LastReply);
   rpc PutBatch(PutBatchRequest) returns (PutReply);
 }
-
-message FlushRequest {}
-message FlushReply {}
 
 message PutRequest {
   bytes key = 1;
