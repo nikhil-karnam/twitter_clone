@@ -26,9 +26,9 @@ p99 results with 10K users, 10 celebs, and 1.1M follows:
 
 | | Normal tweet | Celeb tweet | Open feed |
 |---|---|---|---|
-| Hybrid | 9.45 ms | 5.11 ms | 12.92 ms |
-| Mail to everyone | 10.71 ms | 82.12 ms | 3.78 ms |
-| Mail to no one | 9.02 ms | 4.79 ms | 107.77 ms |
+| Hybrid | 9.45ms | 5.11ms | 12.92ms |
+| Mail to everyone | 10.71ms | 82.12ms | 3.78ms |
+| Mail to no one | 9.02ms | 4.79ms | 107.77ms |
 
 Hybrid makes celeb posts 16× faster than mailing everyone, which makes sense because you're not sending to thousands of mailboxes.\
 And loading feeds is 8x faster than mailing no one, which makes sense because you can load cache instead of having to search through the LSM to pull every followee's tweets.
