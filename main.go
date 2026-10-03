@@ -15,6 +15,7 @@ import "github.com/cockroachdb/pebble"
 import "google.golang.org/grpc"
 import "google.golang.org/grpc/credentials/insecure"
 import pb "twitter_clone/tweets"
+import clientv3 "go.etcd.io/etcd/client/v3"
 
 var writeMode = pebble.Sync
 
@@ -22,6 +23,7 @@ var users *pebble.DB
 var follows *pebble.DB
 var tweets [3]pb.TweetsClient
 var tweetAddrs = [3]string{"localhost:50051", "localhost:50052", "localhost:50053"}
+var etcdCli *clientv3.Client
 
 type Mail struct {
 	User	string
@@ -37,6 +39,37 @@ var celeb_min = 1000
 
 func CreateUser(user string) {
 	users.Set([]byte(user), []byte("0"), writeMode)
+}
+
+func Signup(user, email string) bool {
+	//give up after 2s so signups fail when 2+ nodes are down
+	c, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	//only write if the email has never been used
+	resp, err := etcdCli.Txn(c).
+		If(clientv3.Compare(clientv3.CreateRevision("email:"+email), "=", 0)).
+		Then(clientv3.OpPut("email:"+email, user)).
+		Commit()
+	if err != nil || !resp.Succeeded {
+		return false
+	}
+	CreateUser(user)
+	return true
+}
+
+//just to see if its faster than raft
+func SignupLeaderless(user, email string) bool {
+	//blind write to all 3, no check, like a Cassandra INSERT
+	done := make(chan bool, 3)
+	for _, db := range tweets {
+		go func(db pb.TweetsClient) {
+			db.Put(ctx, &pb.PutRequest{Key: []byte("email:" + email), Value: []byte(user), Sync: true})
+			done <- true
+		}(db)
+	}
+	<-done
+	CreateUser(user)
+	return true
 }
 
 func Follow(user, target string) {
@@ -82,7 +115,7 @@ func Tweet(user, tweet string) {
 			passes++
 		}
 	}
-	//quorum failed, don't mail
+	//quorum failed, don't mail. this is to make sure feeds show reliably stored tweets.
 	if passes < 2{
 		return
 	}
@@ -197,6 +230,10 @@ func GetFollowing(user string) {
 }
 
 func GetProfile(user, target string) {
+	if(!UserExists(user) || !UserExists(target)){
+		return;
+	}
+
 	//naw screw 3 pointer merge sort. we just put everything into a map from all 3 db and sort
 	all := map[string]string{}
 	for _, db := range tweets {
@@ -233,6 +270,10 @@ func GetProfile(user, target string) {
 }
 
 func OpenMail(user string) {
+	if(!UserExists(user)){
+		return;
+	}
+
 	var mailbox []Mail
 	texts, redisErr := rdb.LRange(ctx, "mailbox:"+user, 0, -1).Result()
 	for _, text := range texts {
@@ -360,10 +401,25 @@ func p99(n int, f func(i int)) time.Duration {
 	return times[(n*99+99)/100-1]
 }
 
+func p50(n int, f func(i int)) time.Duration {
+	times := make([]time.Duration, n)
+	for i := 0; i < n; i++ {
+		start := time.Now()
+		f(i)
+		times[i] = time.Since(start)
+	}
+	sort.Slice(times, func(a, b int) bool { return times[a] < times[b] })
+	return times[n/2]
+}
+
 
 func main() {
 	users, _ = pebble.Open("data/users", &pebble.Options{})
 	follows, _ = pebble.Open("data/follows", &pebble.Options{})
+	etcdCli, _ = clientv3.New(clientv3.Config{
+		Endpoints:   []string{"127.0.0.1:2379", "127.0.0.1:22379", "127.0.0.1:32379"},
+		DialTimeout: 2 * time.Second,
+	})
 	for i, addr := range tweetAddrs {
 		conn, _ := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		//defer closes when program is finished
@@ -372,6 +428,7 @@ func main() {
 	}
 	defer users.Close()
 	defer follows.Close()
+	defer etcdCli.Close()
 
 	//runs repairs in the background
 	/*go func() {
