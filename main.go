@@ -107,17 +107,9 @@ func Tweet(user, tweet string) {
 			results <- err
 		}(db)
 	}
-	passes := 0
 	for i := 0; i < 3; i++ {
-		//waits until result arrives
-		err := <-results
-		if err == nil {
-			passes++
-		}
-	}
-	//quorum failed, don't mail. this is to make sure feeds show reliably stored tweets.
-	if passes < 2{
-		return
+		//waits until all 3 writes finish
+		<-results
 	}
 
 	if GetFollowerCount(user) < celeb_min {
@@ -250,15 +242,6 @@ func GetProfile(user, target string) {
 				break
 			}
 			all[string(kv.Key)] = string(kv.Value)
-		}
-	}
-	//merging the feed with the profile in case there's inconsistency
-	texts, _ := rdb.LRange(ctx, "mailbox:"+user, 0, -1).Result()
-	for _, text := range texts {
-		var mail Mail
-		json.Unmarshal([]byte(text), &mail)
-		if mail.User == target {
-			all[target+":"+fmt.Sprintf("%020d", mail.Time)] = mail.Tweet
 		}
 	}
 
@@ -401,17 +384,6 @@ func p99(n int, f func(i int)) time.Duration {
 	return times[(n*99+99)/100-1]
 }
 
-func p50(n int, f func(i int)) time.Duration {
-	times := make([]time.Duration, n)
-	for i := 0; i < n; i++ {
-		start := time.Now()
-		f(i)
-		times[i] = time.Since(start)
-	}
-	sort.Slice(times, func(a, b int) bool { return times[a] < times[b] })
-	return times[n/2]
-}
-
 
 func main() {
 	users, _ = pebble.Open("data/users", &pebble.Options{})
@@ -440,4 +412,4 @@ func main() {
 
 	Setup()
 	Benchmark()
-}
+} 
