@@ -16,7 +16,7 @@ This program also allows you to load a specific user's profile. This directly pu
 
 ---
 
-Finally, replicating the tweet database. The code was originally written for a single Pebble database and now runs three naive replicas. The idea is that if one database dies, the others act as backups. The nodes are leaderless, and writes use a quorum: at least two nodes must store a tweet before it's considered posted. Only then does it get sent to the mailboxes. Why does the mailbox come second? If the main program dies before delivering to the mailboxes, the tweet won't show up in feeds, but it still exists in storage. That's a better scenario than a mailbox showing a tweet that doesn't exist in storage. If a node dies and comes back, replica reconciliation repairs it. This is the core mechanism Twitter's Manhattan database uses to keep its replicas consistent.
+Finally, replicating the tweet database. The code was originally written for a single Pebble database and now runs three naive replicas. The idea is that if one database dies, the others act as backups. The nodes are leaderless, and writes are always accepted: a tweet is written to every node that's up, and only after those writes finish does it get sent to the mailboxes. Why does the mailbox come second? If the main program dies before delivering to the mailboxes, the tweet won't show up in feeds, but it still exists in storage. That's a better scenario than a mailbox showing a tweet that doesn't exist in storage. Nodes that missed a write are repaired by replica reconciliation, which runs in the background every 10 seconds. This is the core mechanism Twitter's Manhattan database uses to keep its replicas consistent.
 
 Each node runs as its own program and talks to the main program over gRPC. Twitter uses its own RPC framework, Finagle. Originally, Pebble databases ran from inside my main program, but I had to move them to separate servers to be able to kill a single node and test replication and reconciliation.
 
@@ -35,6 +35,10 @@ And loading feeds is 8x faster than mailing no one, which makes sense because yo
 
 With one node dead, 10000 tweets were successfully posted with zero lost.\
 Reconciliation repaired all 10000 in 222ms, down from 67s after switching to in-memory comparisons and batched writes.
+
+---
+
+There is also a feature to sign up using an email as the key and a username as the value, and this data is stored across 3 more nodes. Two users should not be allowed to sign up with the same email. With a leaderless approach, such as a Cassandra INSERT-style write, a write just goes to whatever nodes are up, with nothing stopping a second signup from claiming the same email. Therefore, signups go through a separate 3-node etcd cluster, which uses Raft, a leader-based consensus algorithm. If only one node is up, the signup is rejected. If two nodes are up, the signup succeeds. If those two nodes die and the third one restarts, signups are rejected. If two nodes contain an email, one of them dies, and the third one starts, the node with the most recent entry becomes the leader, which in this case is the node with the email. The follower must then catch up on the email before more entries can be processed. Once synced, a duplicate email is rejected. In this way, Raft ensures that no duplicate emails exist in the dataset. In testing, a leaderless version that writes emails like a Cassandra INSERT gave the same email to two accounts, while etcd rejected the second signup. The cost is latency: tests measured Raft to be 1.7x slower than leaderless replication for signups (p99: 64ms vs 38ms, 10ms simulated RTT).
 
 ---
 
