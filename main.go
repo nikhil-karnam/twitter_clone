@@ -15,15 +15,17 @@ import "github.com/cockroachdb/pebble"
 import "google.golang.org/grpc"
 import "google.golang.org/grpc/credentials/insecure"
 import pb "twitter_clone/tweets"
-import clientv3 "go.etcd.io/etcd/client/v3"
+import "database/sql"
+import _ "github.com/go-sql-driver/mysql"
 
 var writeMode = pebble.Sync
 
 var users *pebble.DB
 var follows *pebble.DB
 var tweets [3]pb.TweetsClient
+var mysqlDBs [3]*sql.DB
+var mysqlAddrs = [3]string{"127.0.0.1:3306", "127.0.0.1:3307", "127.0.0.1:3308"}
 var tweetAddrs = [3]string{"localhost:50051", "localhost:50052", "localhost:50053"}
-var etcdCli *clientv3.Client
 
 type Mail struct {
 	User	string
@@ -45,16 +47,16 @@ func Signup(user, email string) bool {
 	//give up after 2s so signups fail when 2+ nodes are down
 	c, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
-	//only write if the email has never been used
-	resp, err := etcdCli.Txn(c).
-		If(clientv3.Compare(clientv3.CreateRevision("email:"+email), "=", 0)).
-		Then(clientv3.OpPut("email:"+email, user)).
-		Commit()
-	if err != nil || !resp.Succeeded {
-		return false
+	//group replication sets a primary server that accepts writes while the others are read only
+	//and get replicated through Paxos
+	for _, db := range mysqlDBs {
+		_, err := db.ExecContext(c, "INSERT INTO users (email, username) VALUES (?, ?)", email, user)
+		if err == nil {
+			CreateUser(user)
+			return true
+		}
 	}
-	CreateUser(user)
-	return true
+	return false
 }
 
 //just to see if its faster than raft
@@ -348,7 +350,7 @@ func Setup() {
 	writeMode = pebble.Sync
 }
 
-func Benchmark() {
+func BenchmarkFanOut() {
 	realStdout := os.Stdout
 	devNull, _ := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
 
@@ -373,6 +375,13 @@ func Benchmark() {
 	}
 }
 
+func BenchmarkSignups() {
+	//using a time tag generates new emails each run so it doesn't collide with previous runs
+	run := strconv.FormatInt(time.Now().UnixNano(), 10)
+	fmt.Println("paxos signup:", p99(1000, func(i int) { Signup("new"+strconv.Itoa(i), run+"-"+strconv.Itoa(i)+"@x.com") }))
+	fmt.Println("leaderless signup:", p99(1000, func(i int) { SignupLeaderless("new"+strconv.Itoa(i), run+"-"+strconv.Itoa(i)+"@x.com") }))
+}
+
 func p99(n int, f func(i int)) time.Duration {
 	times := make([]time.Duration, n)
 	for i := 0; i < n; i++ {
@@ -387,20 +396,22 @@ func p99(n int, f func(i int)) time.Duration {
 
 func main() {
 	users, _ = pebble.Open("data/users", &pebble.Options{})
+	//defer closes when program is finished
+	defer users.Close()
+	
 	follows, _ = pebble.Open("data/follows", &pebble.Options{})
-	etcdCli, _ = clientv3.New(clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379", "127.0.0.1:22379", "127.0.0.1:32379"},
-		DialTimeout: 2 * time.Second,
-	})
+	defer follows.Close()
+	
+	for i, addr := range mysqlAddrs {
+		mysqlDBs[i], _ = sql.Open("mysql", "root:root@tcp("+addr+")/twitter")
+		defer mysqlDBs[i].Close()
+	}
+	
 	for i, addr := range tweetAddrs {
 		conn, _ := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		//defer closes when program is finished
-		defer conn.Close()
 		tweets[i] = pb.NewTweetsClient(conn)
+		defer conn.Close()
 	}
-	defer users.Close()
-	defer follows.Close()
-	defer etcdCli.Close()
 
 	//runs repairs in the background
 	/*go func() {
@@ -410,6 +421,7 @@ func main() {
 		}
 	}()*/
 
-	Setup()
-	Benchmark()
+	//Setup()
+	//BenchmarkFanOut()
+	//BenchmarkSignups()
 } 
