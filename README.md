@@ -1,5 +1,5 @@
 Twitter Clone\
-Written in Go with hybrid fan-out, replicated LSM storage (Pebble), and a Redis feed cache.
+Written in Go with hybrid fan-out, replicated LSM storage (Pebble) and MySQL, and a Redis feed cache.
 
 ---
 
@@ -33,12 +33,14 @@ p99 results with 10K users, 10 celebs, and 1.1M follows:
 Hybrid makes celeb posts 16× faster than mailing everyone, which makes sense because you're not sending to thousands of mailboxes.\
 And loading feeds is 8x faster than mailing no one, which makes sense because you can load cache instead of having to search through the LSM to pull every followee's tweets.
 
-With one node dead, 10000 tweets were successfully posted with zero lost.\
-Reconciliation repaired all 10000 in 222ms, down from 67s after switching to in-memory comparisons and batched writes.
+With one node dead, 10K tweets were successfully posted with zero lost.\
+Reconciliation repaired all 10K in 222ms, down from 67s after switching to in-memory comparisons and batched writes.
 
 ---
 
-There is also a feature to sign up using an email as the key and a username as the value, and this data is stored across 3 more nodes. Two users should not be allowed to sign up with the same email. With a leaderless approach, such as a Cassandra INSERT-style write, a write just goes to whatever nodes are up, with nothing stopping a second signup from claiming the same email. Therefore, signups go through a separate 3-node etcd cluster, which uses Raft, a leader-based consensus algorithm. If only one node is up, the signup is rejected. If two nodes are up, the signup succeeds. If those two nodes die and the third one restarts, signups are rejected. If two nodes contain an email, one of them dies, and the third one starts, the node with the most recent entry becomes the leader, which in this case is the node with the email. The follower must then catch up on the email before more entries can be processed. Once synced, a duplicate email is rejected. In this way, Raft ensures that no duplicate emails exist in the dataset. In testing, a leaderless version that writes emails like a Cassandra INSERT gave the same email to two accounts, while etcd rejected the second signup. The cost is latency: tests measured Raft to be 1.7x slower than leaderless replication for signups (p99: 64ms vs 38ms, 10ms simulated RTT).
+There is also a feature to sign up using an email as the key and a username as the value, and this data is stored across 3 MySQL servers. Two users should not be allowed to sign up with the same email. With a leaderless approach (we won't name names, but it might be Cassandra INSERT), a write just goes to whatever nodes are up, with nothing stopping a second signup from claiming the same email. Even if you add a check to prevent duplicates, if one node is behind due to a previous crash and it doesn't have the updated emails, a user may send a signup request and that behind node will end up accepting it, leading to the cluster containing the same email for two different accounts.
+
+The fix is MySQL's group replication, which uses Paxos (*inferior* to Raft btw). It contains one primary or leader node that prevents duplicates before changes get applied elsewhere. Other nodes are not allowed to accept writes with the setting `super_read_only`, which is automatically handled by group replication. This primary is the master list and contains the truth. How? MySQL guarantees that before a new primary is picked, every surviving server contains every committed signup. Furthermore, a quorum is used to ensure that if a signup is written into a database, it must exist across a majority of nodes. The purpose of this is that if the primary dies, the cluster does not lose that node's data because other nodes contain the same data. Uber is an example of a company that uses this setup to enforce consistency in data. The cost is latency: tests measured Paxos to be 2x slower than leaderless replication for signups (p99: 82ms vs 40ms, 10ms simulated RTT).
 
 ---
 
@@ -51,4 +53,6 @@ go run ./tweetserver data/tweets1 :50052
 go run ./tweetserver data/tweets2 :50053
 ```
 
-Then run `go run .`.
+Signups use a 3-node MySQL Group Replication cluster on ports 3306–3308.
+
+Uncomment `Setup()` and `BenchmarkFanOut()` and run `go run .`.
