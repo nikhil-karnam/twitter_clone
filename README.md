@@ -45,7 +45,7 @@ The fix is MySQL's group replication, which uses Paxos (*inferior* to Raft btw).
 
 To run:\
 start Redis,\
-then Kafka (with a fanout topic of 4 partitions)\
+then Kafka with topic `fanout` and 4 partitions\
 then start the three tweet nodes in separate terminals
 
 ```bash
