@@ -8,6 +8,7 @@ import "sort"
 import "math/rand"
 import "maps"
 import "slices"
+import "sync"
 import "context"
 import "encoding/json"
 import "github.com/redis/go-redis/v9"
@@ -17,6 +18,7 @@ import "google.golang.org/grpc/credentials/insecure"
 import pb "twitter_clone/tweets"
 import "database/sql"
 import _ "github.com/go-sql-driver/mysql"
+import "github.com/segmentio/kafka-go"
 
 var writeMode = pebble.Sync
 
@@ -27,6 +29,18 @@ var mysqlDBs [3]*sql.DB
 var mysqlAddrs = [3]string{"127.0.0.1:3306", "127.0.0.1:3307", "127.0.0.1:3308"}
 var tweetAddrs = [3]string{"localhost:50051", "localhost:50052", "localhost:50053"}
 
+var producer = &kafka.Writer{
+	Addr:         kafka.TCP("localhost:9092"),
+	Topic:        "fanout",
+	//kafka waits to send in batches, default is 1 second wait. change this.
+	BatchTimeout: 10 * time.Millisecond,
+}
+
+//lists to store runtime per function, benchmark converts these to p99
+var pebbleTimes, mailTimes, feedTimes, signupTimes []time.Duration
+//to handle race condition
+var mailLock sync.Mutex
+
 type Mail struct {
 	User	string
 	Tweet	string
@@ -36,7 +50,7 @@ type Mail struct {
 var rdb = redis.NewClient(&redis.Options{Addr: "localhost:6379", MaxRetries: -1})
 var ctx = context.Background()
 
-var celeb_min = 1000
+var celebMin = 1000
 
 
 func CreateUser(user string) {
@@ -44,6 +58,8 @@ func CreateUser(user string) {
 }
 
 func Signup(user, email string) bool {
+	start := time.Now()
+
 	//give up after 2s so signups fail when 2+ nodes are down
 	c, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
@@ -53,14 +69,20 @@ func Signup(user, email string) bool {
 		_, err := db.ExecContext(c, "INSERT INTO users (email, username) VALUES (?, ?)", email, user)
 		if err == nil {
 			CreateUser(user)
+
+			signupTimes = append(signupTimes, time.Since(start))
 			return true
 		}
 	}
+
+	signupTimes = append(signupTimes, time.Since(start))
 	return false
 }
 
 //just to see if its faster than raft
 func SignupLeaderless(user, email string) bool {
+	start := time.Now()
+
 	//blind write to all 3, no check, like a Cassandra INSERT
 	done := make(chan bool, 3)
 	for _, db := range tweets {
@@ -71,6 +93,8 @@ func SignupLeaderless(user, email string) bool {
 	}
 	<-done
 	CreateUser(user)
+
+	signupTimes = append(signupTimes, time.Since(start))
 	return true
 }
 
@@ -93,14 +117,15 @@ func Unfollow(user, target string) {
 }
 
 func Tweet(user, tweet string) {
+	now := time.Now()
+
 	if(!UserExists(user)){
 		return;
 	}
 
-	now := time.Now()
-	
 	results := make(chan error, 3)
 	for _, db := range tweets {
+		//write to all 3 dbs at once
 		go func(db pb.TweetsClient) {
 			_, err := db.Put(ctx, &pb.PutRequest{
 				Key: []byte(user+":"+fmt.Sprintf("%020d", now.UnixNano())), 
@@ -109,36 +134,75 @@ func Tweet(user, tweet string) {
 			results <- err
 		}(db)
 	}
+	//leaderless: move on once any one server has the tweet, repair catches up the rest
 	for i := 0; i < 3; i++ {
-		//waits until all 3 writes finish
-		<-results
+		if <-results == nil {
+			break
+		}
 	}
 
-	if GetFollowerCount(user) < celeb_min {
-		iter, _ := follows.NewIter(&pebble.IterOptions{
-			LowerBound: []byte("follower:" + user + ":"),
-			UpperBound: []byte("follower:" + user + ";"),
-		})
-		//talking to redis once instead of multiple times for each delivery to save time
+	mailLock.Lock()
+	pebbleTimes = append(pebbleTimes, time.Since(now))
+	mailLock.Unlock()
+
+	if !IsCeleb(user) {
+		mail, _ := json.Marshal(Mail{user, tweet, now.UnixNano()})
+		producer.WriteMessages(ctx, kafka.Message{Value: mail})
+	}
+}
+
+//reads tweets from kafka and delivers them to mailboxes
+func Consumer() {
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{"localhost:9092"},
+		Topic:   "fanout",
+		GroupID: "fanout-consumers",
+	})
+	defer reader.Close()
+
+	for {
+		//fetch works on the next mail without moving the kafka bookmark 
+		msg, err := reader.FetchMessage(ctx)
+		if err != nil {
+			return
+		}
+
+		var mail Mail
+		//unmarshal just to find the followers to send the mail to
+		json.Unmarshal(msg.Value, &mail)
 		pipe := rdb.Pipeline()
+		iter, _ := follows.NewIter(&pebble.IterOptions{
+			LowerBound: []byte("follower:" + mail.User + ":"),
+			UpperBound: []byte("follower:" + mail.User + ";"),
+		})
+
 		for iter.First(); iter.Valid(); iter.Next() {
-			follower := string(iter.Key()[len("follower:"+user+":"):])
-			mail, _ := json.Marshal(Mail{user, tweet, now.UnixNano()})
-			pipe.RPush(ctx, "mailbox:"+follower, mail)
-			//don't want to much cache
+			follower := string(iter.Key()[len("follower:"+mail.User+":"):])
+			pipe.RPush(ctx, "mailbox:"+follower, msg.Value)
 			pipe.LTrim(ctx, "mailbox:"+follower, -20, -1)
 		}
-		pipe.Exec(ctx)
 		iter.Close()
+
+		if _, err := pipe.Exec(ctx); err != nil {
+			return
+		}
+
+		mailLock.Lock()
+		mailTimes = append(mailTimes, time.Since(time.Unix(0, mail.Time)))
+		mailLock.Unlock()
+
+		//only move the bookmark once every mailbox got the tweet
+		//this ensures a retry will occur if a worker died without completing
+		reader.CommitMessages(ctx, msg)
 	}
 }
 
 func Reconcile() {
 	//using an in memory map to save repeated reads to the disk
 	all := map[string][]byte{}
-	var ram_copies [3]map[string]bool
+	var ramCopies [3]map[string]bool
 	for i := range tweets {
-		ram_copies[i] = map[string]bool{}
+		ramCopies[i] = map[string]bool{}
 		stream, err := tweets[i].Scan(ctx, &pb.ScanRequest{})
 		if err != nil {
 			continue
@@ -149,7 +213,7 @@ func Reconcile() {
 				break
 			}
 			all[string(kv.Key)] = kv.Value
-			ram_copies[i][string(kv.Key)] = true
+			ramCopies[i][string(kv.Key)] = true
 		}
 	}
 	//for each of the 3 copies we turned into maps in memory
@@ -158,7 +222,7 @@ func Reconcile() {
 		//batch saves repeated writes to the disk
 		var missing []*pb.KV
 		for key, value := range all {
-			if !ram_copies[i][key] {
+			if !ramCopies[i][key] {
 				missing = append(missing, &pb.KV{Key: []byte(key), Value: value})
 			}
 		}
@@ -190,6 +254,10 @@ func GetFollowerCount(user string) int {
 	count, _ := strconv.Atoi(string(value))
 	closer.Close()
 	return count
+}
+
+func IsCeleb(user string) bool {
+	return GetFollowerCount(user) >= celebMin
 }
 
 func IsFollowing(user, target string) bool {
@@ -255,13 +323,21 @@ func GetProfile(user, target string) {
 }
 
 func OpenMail(user string) {
+	start := time.Now()
+
 	if(!UserExists(user)){
 		return;
 	}
 
 	var mailbox []Mail
+	//hashset to remove duplicate mails in feed to handle a lack of idempotency on fan-out
+	seen := map[string]bool{}
 	texts, redisErr := rdb.LRange(ctx, "mailbox:"+user, 0, -1).Result()
 	for _, text := range texts {
+		if seen[text] {
+			continue
+		}
+		seen[text] = true
 		var mail Mail
 		json.Unmarshal([]byte(text), &mail)
 		mailbox = append(mailbox, mail)
@@ -277,9 +353,9 @@ func OpenMail(user string) {
 		followee := string(iter.Key()[len("following:"+user+":"):])
 		//collect the celeb's latest tweet as a mail struct
 		//OR if redis is down collect each followee's latest tweet anyways
-		if redisErr != nil || GetFollowerCount(followee) >= celeb_min {
+		if redisErr != nil || IsCeleb(followee) {
 			var newest Mail
-			has_tweeted := false
+			hasTweeted := false
 			//if one db is still recovery we don't know which is latest
 			//check all 3 dbs to determine latest
 			for _, db := range tweets {
@@ -289,13 +365,13 @@ func OpenMail(user string) {
 				})
 				if err == nil && reply.Found {
 					nanos, _ := strconv.ParseInt(string(reply.Kv.Key[len(followee+":"):]), 10, 64)
-					if !has_tweeted || nanos > newest.Time {
+					if !hasTweeted || nanos > newest.Time {
 						newest = Mail{followee, string(reply.Kv.Value), nanos}
-						has_tweeted = true
+						hasTweeted = true
 					}
 				}
 			}
-			if has_tweeted {
+			if hasTweeted {
 				celebTweets = append(celebTweets, newest)
 			}
 		}
@@ -317,9 +393,12 @@ func OpenMail(user string) {
 		PrintTime(mail.Time)
 		fmt.Println(mail.User+":", mail.Tweet)
 	}
+	
+	feedTimes = append(feedTimes, time.Since(start))
 }
 
-func Setup() {
+
+func Setup() {	
 	//speed up process
 	writeMode = pebble.NoSync
 
@@ -351,46 +430,96 @@ func Setup() {
 }
 
 func BenchmarkFanOut() {
+	rdb.FlushAll(ctx)
+
 	realStdout := os.Stdout
 	devNull, _ := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
 
-	names := []string{"hybrid", "mail to everyone", "mail to no one"}
-	celeb_mins := []int{1000, 1 << 14, 0}
+	normalTweet := func(i int) { Tweet("user"+strconv.Itoa(rand.Intn(10000)), "hello") }
+	celebTweet := func(i int) { Tweet("celeb"+strconv.Itoa(i%10), "hello") }
+	openFeed := func(i int) { OpenMail("user" + strconv.Itoa(rand.Intn(10000))) }
 
-	for s := 0; s < 3; s++ {
-		if names[s] == "mail to no one" {
-			rdb.FlushAll(ctx)
-		}
-		
-		celeb_min = celeb_mins[s]
+	celebMin = 1000
+	fmt.Println("hybrid normal delivery:", p99(1000, normalTweet, &mailTimes))
+	fmt.Println("hybrid celeb db:", p99(100, celebTweet, &pebbleTimes))
+	os.Stdout = devNull
+	t := p99(1000, openFeed, &feedTimes)
+	os.Stdout = realStdout
+	fmt.Println("hybrid open feed:", t)
 
-		fmt.Println(names[s], "normal tweet:", p99(1000, func(i int) { Tweet("user"+strconv.Itoa(rand.Intn(10000)), "hello") }))
-		
-		fmt.Println(names[s], "celeb tweet:", p99(100, func(i int) { Tweet("celeb"+strconv.Itoa(i%10), "hello") }))
-		
-		os.Stdout = devNull
-		t := p99(1000, func(i int) { OpenMail("user" + strconv.Itoa(rand.Intn(10000))) })
-		os.Stdout = realStdout
-		fmt.Println(names[s], "open feed:", t)
-	}
+	celebMin = 1 << 14
+	fmt.Println("mail to everyone normal delivery:", p99(1000, normalTweet, &mailTimes))
+	fmt.Println("mail to everyone celeb delivery:", p99(100, celebTweet, &mailTimes))
+	os.Stdout = devNull
+	t = p99(1000, openFeed, &feedTimes)
+	os.Stdout = realStdout
+	fmt.Println("mail to everyone open feed:", t)
+
+	rdb.FlushAll(ctx)
+	celebMin = 0
+	fmt.Println("mail to no one normal db:", p99(1000, normalTweet, &pebbleTimes))
+	fmt.Println("mail to no one celeb db:", p99(100, celebTweet, &pebbleTimes))
+	os.Stdout = devNull
+	t = p99(1000, openFeed, &feedTimes)
+	os.Stdout = realStdout
+	fmt.Println("mail to no one open feed:", t)
 }
 
 func BenchmarkSignups() {
 	//using a time tag generates new emails each run so it doesn't collide with previous runs
 	run := strconv.FormatInt(time.Now().UnixNano(), 10)
-	fmt.Println("paxos signup:", p99(1000, func(i int) { Signup("new"+strconv.Itoa(i), run+"-"+strconv.Itoa(i)+"@x.com") }))
-	fmt.Println("leaderless signup:", p99(1000, func(i int) { SignupLeaderless("new"+strconv.Itoa(i), run+"-"+strconv.Itoa(i)+"@x.com") }))
+	fmt.Println("paxos signup:", p99(1000, func(i int) { Signup("new"+strconv.Itoa(i), run+"-"+strconv.Itoa(i)+"@x.com") }, &signupTimes))
+	fmt.Println("leaderless signup:", p99(1000, func(i int) { SignupLeaderless("new"+strconv.Itoa(i), run+"-"+strconv.Itoa(i)+"@x.com") }, &signupTimes))
 }
 
-func p99(n int, f func(i int)) time.Duration {
-	times := make([]time.Duration, n)
+//runs f n times, waits until all n runtimes are recorded, then returns the p99
+func p99(n int, f func(i int), times *[]time.Duration) time.Duration {
+	//clear leftovers, since tweets also fill lists this run isn't reading
+	mailLock.Lock()
+	*times = nil
+	mailLock.Unlock()
+
 	for i := 0; i < n; i++ {
-		start := time.Now()
 		f(i)
-		times[i] = time.Since(start)
 	}
-	sort.Slice(times, func(a, b int) bool { return times[a] < times[b] })
-	return times[(n*99+99)/100-1]
+
+	//consumers record mail times in the background, so wait for all n
+	for {
+		mailLock.Lock()
+		done := len(*times) >= n
+		mailLock.Unlock()
+		if done {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	sort.Slice(*times, func(a, b int) bool { return (*times)[a] < (*times)[b] })
+	return (*times)[(n*99+99)/100-1]
+}
+
+//celebs tweet with fan-out on, then the program dies mid-delivery
+//run main once with this, run main again with this commented out so consumers finish tasks.
+//then count unique tweets per mailbox in cli, each should hold 10.
+func CrashTest() {
+	rdb.FlushAll(ctx)
+
+	celebMin = 1 << 14
+	for c := 0; c < 10; c++ {
+		Tweet("celeb"+strconv.Itoa(c), "test"+strconv.Itoa(c))
+	}
+	time.Sleep(100 * time.Millisecond)
+	os.Exit(1)
+}
+
+//to test if kafka 4 consumers speed up a burst of 1000 users tweeting at once,
+//where a backlog forms and consumers have work to split
+func BenchmarkBurst() {
+	rdb.FlushAll(ctx)
+
+	celebMin = 1000
+	burstTweet := func(i int) { go Tweet("user"+strconv.Itoa(rand.Intn(10000)), "hello") }
+	fmt.Println("burst normal delivery:", p99(1000, burstTweet, &mailTimes))
 }
 
 
@@ -413,6 +542,13 @@ func main() {
 		defer conn.Close()
 	}
 
+	//change to i < 1 and run benchmarkBurst() to test 1 kafka consumer bottleneck
+	for i := 0; i < 4; i++ {
+		go Consumer()
+	}
+	//consumers need a few seconds to start, start benchmarking timers only after this.
+	time.Sleep(10 * time.Second)
+
 	//runs repairs in the background
 	/*go func() {
 		for {
@@ -424,4 +560,6 @@ func main() {
 	//Setup()
 	//BenchmarkFanOut()
 	//BenchmarkSignups()
+	//CrashTest()
+	//BenchmarkBurst()
 } 
