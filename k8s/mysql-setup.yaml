@@ -10,11 +10,17 @@ spec:
       containers:
       - name: mysql-setup
         image: mysql:8.4
+        env:
+        - name: MYSQL_PWD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-root
+              key: rootPassword
         command: ["bash", "-c"]
         args:
         - |
           set -e
           #wait until the group is up and the router can reach the primary
-          until mysqladmin ping -h mysql -P 6446 -uroot -proot --silent; do sleep 5; done
+          until mysqladmin ping -h mysql -P 6446 -uroot --silent; do sleep 5; done
           #your exact table, created on the primary through the router
-          mysql -h mysql -P 6446 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS twitter; CREATE TABLE IF NOT EXISTS twitter.users (email varchar(255) NOT NULL, username varchar(255) NOT NULL, PRIMARY KEY (email));"
+          mysql -h mysql -P 6446 -uroot -e "CREATE DATABASE IF NOT EXISTS twitter; CREATE TABLE IF NOT EXISTS twitter.users (email varchar(255) NOT NULL, username varchar(255) NOT NULL, PRIMARY KEY (email));"

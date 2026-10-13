@@ -30,7 +30,7 @@ func Connect(addr string) pb.TweetsClient {
 }
 //connects to one mysql node by address
 func Open(addr string) *sql.DB {
-	db, _ := sql.Open("mysql", "root:root@tcp("+addr+")/twitter")
+	db, _ := sql.Open("mysql", "root:"+os.Getenv("MYSQL_PASSWORD")+"@tcp("+addr+")/twitter")
 	return db
 }
 
