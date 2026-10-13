@@ -23,7 +23,7 @@ spec:
 
           #save the login nodes use to rejoin, and turn on super-read-only for every later start
           for h in mysql-0.mysql mysql-1.mysql mysql-2.mysql; do
-            $M $h -e "CHANGE REPLICATION SOURCE TO SOURCE_USER='root', SOURCE_PASSWORD='root' FOR CHANNEL 'group_replication_recovery'; SET PERSIST_ONLY super_read_only=ON;"
+            $M $h -e "CHANGE REPLICATION SOURCE TO SOURCE_USER='root', SOURCE_PASSWORD='root' FOR CHANNEL 'group_replication_recovery'; SET PERSIST_ONLY super_read_only=ON; SET PERSIST group_replication_start_on_boot=ON;"
           done
 
           #start the group on the first node

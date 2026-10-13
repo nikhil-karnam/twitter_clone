@@ -44,7 +44,7 @@ spec:
             --report-host=$HOSTNAME.mysql --report-port=3306 \
             --plugin-load-add=group_replication.so \
             --group-replication-group-name=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa \
-            --group-replication-start-on-boot=ON \
+            --group-replication-start-on-boot=OFF \
             --group-replication-local-address=$HOSTNAME.mysql:33061 \
             --group-replication-group-seeds=mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061 \
             --group-replication-recovery-get-public-key=ON
