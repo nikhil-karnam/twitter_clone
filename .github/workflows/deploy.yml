@@ -5,8 +5,15 @@ on:
   push:
     branches: [main]
 
+#never runs at the same time as destroy. waits if destroy is running
+concurrency:
+  group: infra
+  cancel-in-progress: false
+
 jobs:
   terraform:
+    #keeps running if the run gets cancelled, so terraform always finishes cleanly
+    if: always()
     runs-on: ubuntu-24.04
     outputs:
       redis_addr: ${{ steps.tf.outputs.redis_addr }}

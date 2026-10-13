@@ -3,6 +3,11 @@ name: destroy
 on:
   workflow_dispatch:
 
+#cancels a running deploy, then runs once that deploy has fully stopped
+concurrency:
+  group: infra
+  cancel-in-progress: true
+
 jobs:
   destroy:
     runs-on: ubuntu-24.04
