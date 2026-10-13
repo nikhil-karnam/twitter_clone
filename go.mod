@@ -6,6 +6,7 @@ require (
 	github.com/cockroachdb/pebble v1.1.5
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/redis/go-redis/v9 v9.22.0
+	github.com/segmentio/kafka-go v0.4.51
 	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
 )
@@ -36,7 +37,6 @@ require (
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	github.com/segmentio/kafka-go v0.4.51 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df // indirect
