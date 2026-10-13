@@ -5,8 +5,10 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  terraform:
     runs-on: ubuntu-24.04
+    outputs:
+      redis_addr: ${{ steps.tf.outputs.redis_addr }}
     steps:
       - uses: actions/checkout@v4
 
@@ -22,11 +24,23 @@ jobs:
           terraform_wrapper: false
 
       - name: terraform
+        id: tf
         working-directory: terraform
         run: |
           terraform init
           terraform apply -auto-approve
-          echo "REDIS_ADDR=$(terraform output -raw redis_addr)" >> $GITHUB_ENV
+          echo "redis_addr=$(terraform output -raw redis_addr)" >> $GITHUB_OUTPUT
+
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
 
       - uses: aws-actions/amazon-ecr-login@v2
 
@@ -38,11 +52,23 @@ jobs:
           docker build --build-arg CMD=consumer -t $REG/kafka-consumer:${{ github.sha }} .
           docker push $REG/kafka-consumer:${{ github.sha }}
 
+  deploy:
+    runs-on: ubuntu-24.04
+    needs: [terraform, build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
       - name: deploy
         run: |
           aws eks update-kubeconfig --name twitter-cluster --region us-east-2
           kubectl apply -f https://raw.githubusercontent.com/mysql/mysql-operator/trunk/deploy/deploy-crds.yaml
           kubectl apply -f https://raw.githubusercontent.com/mysql/mysql-operator/trunk/deploy/deploy-operator.yaml
           kubectl wait --for=condition=established crd/innodbclusters.mysql.oracle.com
-          sed -i "s|:latest|:${{ github.sha }}|; s|REDIS_ADDR_HERE|$REDIS_ADDR|" k8s/*.yaml
+          sed -i "s|:latest|:${{ github.sha }}|; s|REDIS_ADDR_HERE|${{ needs.terraform.outputs.redis_addr }}|" k8s/*.yaml
           kubectl apply -f k8s/
