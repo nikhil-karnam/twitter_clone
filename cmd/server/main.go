@@ -27,7 +27,7 @@ func (s *server) Put(ctx context.Context, req *pb.PutRequest) (*pb.PutReply, err
 
 func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetReply, error) {
 	value, closer, err := s.db.Get(req.Key)
-	if err != nil {
+	if err == pebble.ErrNotFound {
 		return &pb.GetReply{Found: false}, nil
 	}
 	defer closer.Close()
@@ -61,7 +61,7 @@ func (s *server) Last(ctx context.Context, req *pb.ScanRequest) (*pb.LastReply, 
 	return &pb.LastReply{Found: true, Kv: &pb.KV{Key: slices.Clone(iter.Key()), Value: slices.Clone(iter.Value())}}, nil
 }
 
-// usage: go run ./tweetserver data/tweets0 :50051
+// usage: go run ./cmd/server data/tweets0 :50051
 func main() {
 	db, _ := pebble.Open(os.Args[1], &pebble.Options{})
 	defer db.Close()

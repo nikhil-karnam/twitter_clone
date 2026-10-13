@@ -1,5 +1,2 @@
-data/
-data/
-mysqldata/
-data/
-mysqldata/
+terraform/.terraform/
+terraform/*.tfstate*

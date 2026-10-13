@@ -1,0 +1,45 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.5
+          terraform_wrapper: false
+
+      - name: terraform
+        working-directory: terraform
+        run: |
+          terraform init
+          terraform apply -auto-approve
+          echo "REDIS_ADDR=$(terraform output -raw redis_addr)" >> $GITHUB_ENV
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: build and push
+        run: |
+          REG=905765459973.dkr.ecr.us-east-2.amazonaws.com
+          docker build --build-arg CMD=server -t $REG/pebble-server:${{ github.sha }} .
+          docker push $REG/pebble-server:${{ github.sha }}
+          docker build --build-arg CMD=consumer -t $REG/kafka-consumer:${{ github.sha }} .
+          docker push $REG/kafka-consumer:${{ github.sha }}
+
+      - name: deploy
+        run: |
+          aws eks update-kubeconfig --name twitter-cluster --region us-east-2
+          sed -i "s|:latest|:${{ github.sha }}|; s|REDIS_ADDR_HERE|$REDIS_ADDR|" k8s/*.yaml
+          kubectl apply -f k8s/

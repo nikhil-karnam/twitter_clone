@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      containers:
+      - name: consumer
+        image: 905765459973.dkr.ecr.us-east-2.amazonaws.com/kafka-consumer:latest
+        env:
+        - name: REDIS_ADDR
+          value: REDIS_ADDR_HERE
+        - name: FOLLOWS_ADDR
+          value: follows-0.follows:50051
+        - name: KAFKA_ADDRS
+          value: kafka-0.kafka:9092

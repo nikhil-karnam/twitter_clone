@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app: mysql
+  ports:
+  - name: mysql
+    port: 3306
+  - name: group
+    port: 33061
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+spec:
+  serviceName: mysql
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.4
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+        command: ["bash", "-c"]
+        args:
+        - |
+          ID=${HOSTNAME##*-}
+          exec docker-entrypoint.sh mysqld \
+            --server-id=$((ID+1)) --gtid-mode=ON --enforce-gtid-consistency=ON \
+            --mysqlx=OFF \
+            --report-host=$HOSTNAME.mysql --report-port=3306 \
+            --plugin-load-add=group_replication.so \
+            --group-replication-group-name=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa \
+            --group-replication-start-on-boot=ON \
+            --group-replication-local-address=$HOSTNAME.mysql:33061 \
+            --group-replication-group-seeds=mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061 \
+            --group-replication-recovery-get-public-key=ON
+        ports:
+        - containerPort: 3306
+        - containerPort: 33061
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+          subPath: mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: ebs
+      resources:
+        requests:
+          storage: 1Gi
