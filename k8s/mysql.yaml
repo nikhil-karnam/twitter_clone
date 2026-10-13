@@ -43,11 +43,11 @@ spec:
             --mysqlx=OFF \
             --report-host=$HOSTNAME.mysql --report-port=3306 \
             --plugin-load-add=group_replication.so \
-            --group-replication-group-name=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa \
-            --group-replication-start-on-boot=OFF \
-            --group-replication-local-address=$HOSTNAME.mysql:33061 \
-            --group-replication-group-seeds=mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061 \
-            --group-replication-recovery-get-public-key=ON
+            --loose-group-replication-group-name=aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa \
+            --loose-group-replication-start-on-boot=OFF \
+            --loose-group-replication-local-address=$HOSTNAME.mysql:33061 \
+            --loose-group-replication-group-seeds=mysql-0.mysql:33061,mysql-1.mysql:33061,mysql-2.mysql:33061 \
+            --loose-group-replication-recovery-get-public-key=ON
         ports:
         - containerPort: 3306
         - containerPort: 33061
