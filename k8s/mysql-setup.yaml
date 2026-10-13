@@ -14,24 +14,7 @@ spec:
         args:
         - |
           set -e
-          M="mysql -uroot -proot -h"
-
-          #wait until all 3 nodes are up
-          for h in mysql-0.mysql mysql-1.mysql mysql-2.mysql; do
-            until mysqladmin ping -h $h -uroot -proot --silent; do sleep 5; done
-          done
-
-          #save the login nodes use to rejoin, turn on super-read-only and start-on-boot for every later start
-          for h in mysql-0.mysql mysql-1.mysql mysql-2.mysql; do
-            $M $h -e "CHANGE REPLICATION SOURCE TO SOURCE_USER='root', SOURCE_PASSWORD='root' FOR CHANNEL 'group_replication_recovery'; SET PERSIST_ONLY super_read_only=ON; SET PERSIST group_replication_start_on_boot=ON;"
-          done
-
-          #start the group on the first node
-          $M mysql-0.mysql -e "SET GLOBAL group_replication_bootstrap_group=ON; START GROUP_REPLICATION; SET GLOBAL group_replication_bootstrap_group=OFF;"
-
-          #your exact table
-          $M mysql-0.mysql -e "CREATE DATABASE IF NOT EXISTS twitter; CREATE TABLE IF NOT EXISTS twitter.users (email varchar(255) NOT NULL, username varchar(255) NOT NULL, PRIMARY KEY (email));"
-
-          #join the other 2
-          $M mysql-1.mysql -e "START GROUP_REPLICATION;"
-          $M mysql-2.mysql -e "START GROUP_REPLICATION;"
+          #wait until the group is up and the router can reach the primary
+          until mysqladmin ping -h mysql -P 6446 -uroot -proot --silent; do sleep 5; done
+          #your exact table, created on the primary through the router
+          mysql -h mysql -P 6446 -uroot -proot -e "CREATE DATABASE IF NOT EXISTS twitter; CREATE TABLE IF NOT EXISTS twitter.users (email varchar(255) NOT NULL, username varchar(255) NOT NULL, PRIMARY KEY (email));"
