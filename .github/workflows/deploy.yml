@@ -70,5 +70,6 @@ jobs:
           kubectl apply -f https://raw.githubusercontent.com/mysql/mysql-operator/trunk/deploy/deploy-crds.yaml
           kubectl apply -f https://raw.githubusercontent.com/mysql/mysql-operator/trunk/deploy/deploy-operator.yaml
           kubectl wait --for=condition=established crd/innodbclusters.mysql.oracle.com
+          kubectl rollout status deploy/mysql-operator -n mysql-operator --timeout=5m
           sed -i "s|:latest|:${{ github.sha }}|; s|REDIS_ADDR_HERE|${{ needs.terraform.outputs.redis_addr }}|" k8s/*.yaml
           kubectl apply -f k8s/
