@@ -2,8 +2,6 @@ name: deploy
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 #never runs at the same time as destroy. waits if destroy is running
 concurrency:
