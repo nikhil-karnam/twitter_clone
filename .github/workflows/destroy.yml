@@ -28,7 +28,7 @@ jobs:
       - name: delete kubernetes
         run: |
           aws eks update-kubeconfig --name twitter-cluster --region us-east-2
-          kubectl delete -f k8s/ --ignore-not-found
+          kubectl delete -f k8s/ --ignore-not-found || true
           kubectl delete pvc --all
           while [ -n "$(kubectl get pv -o name)" ]; do sleep 5; done
 
