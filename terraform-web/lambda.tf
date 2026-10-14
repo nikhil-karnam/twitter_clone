@@ -31,20 +31,6 @@ resource "aws_lambda_function_url" "node" {
   }
 }
 
-resource "aws_lambda_permission" "url" {
-  function_name          = aws_lambda_function.node.function_name
-  action                 = "lambda:InvokeFunctionUrl"
-  principal              = "*"
-  function_url_auth_type = "NONE"
-}
-
-resource "aws_lambda_permission" "invoke" {
-  function_name            = aws_lambda_function.node.function_name
-  action                   = "lambda:InvokeFunction"
-  principal                = "*"
-  invoked_via_function_url = true
-}
-
 output "lambda_url" {
   value = aws_lambda_function_url.node.function_url
 }
