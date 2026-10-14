@@ -17,18 +17,11 @@ import (
 
 
 func Signup(user, email string) bool {
-	//give up after 2s so signups fail when 2+ nodes are down
+	//if 2+ nodes are down, insert will timeout as it should.
 	c, cancel := context.WithTimeout(connections.Ctx, 2*time.Second)
 	defer cancel()
-	//group replication sets a primary server that accepts writes while the others are read only
-	//and get replicated through Paxos
-	for _, db := range connections.Mysql {
-		_, err := db.ExecContext(c, "INSERT INTO users (email, username) VALUES (?, ?)", email, user)
-		if err == nil {
-			return true
-		}
-	}
-	return false
+	_, err := connections.Mysql.ExecContext(c, "INSERT INTO users (email, username) VALUES (?, ?)", email, user)
+	return err == nil
 }
 
 //just to see if its faster than leader-based
@@ -49,16 +42,13 @@ func Follow(user, target string) {
 	if !UserExists(user) || !UserExists(target) {
 		return
 	}
-	for _, db := range connections.Mysql {
-		tx, _ := db.Begin()
-		if _, err := tx.Exec("INSERT INTO follows (follower, followee) VALUES (?, ?)", user, target); err != nil {
-			tx.Rollback()
-			continue
-		}
-		tx.Exec("UPDATE users SET follower_count = follower_count + 1 WHERE username = ?", target)
-		tx.Commit()
+	tx, _ := connections.Mysql.Begin()
+	if _, err := tx.Exec("INSERT INTO follows (follower, followee) VALUES (?, ?)", user, target); err != nil {
+		tx.Rollback()
 		return
 	}
+	tx.Exec("UPDATE users SET follower_count = follower_count + 1 WHERE username = ?", target)
+	tx.Commit()
 }
 
 func Tweet(user, tweet string) {
@@ -133,23 +123,15 @@ func PrintTime(nanos int64) {
 }
 
 func UserExists(user string) bool {
-	for _, db := range connections.Mysql {
-		var n int
-		if db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", user).Scan(&n) == nil {
-			return n > 0
-		}
-	}
-	return false
+	var n int
+	connections.Mysql.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", user).Scan(&n)
+	return n > 0
 }
 
 func GetFollowerCount(user string) int {
-	for _, db := range connections.Mysql {
-		var count int
-		if db.QueryRow("SELECT follower_count FROM users WHERE username = ?", user).Scan(&count) == nil {
-			return count
-		}
-	}
-	return 0
+	var count int
+	connections.Mysql.QueryRow("SELECT follower_count FROM users WHERE username = ?", user).Scan(&count)
+	return count
 }
 
 func IsCeleb(user string) bool {
@@ -158,37 +140,25 @@ func IsCeleb(user string) bool {
 
 func GetFollowers(user string) []string {
 	var followers []string
-	for _, db := range connections.Mysql {
-		rows, err := db.Query("SELECT follower FROM follows WHERE followee = ?", user)
-		if err != nil {
-			continue
-		}
-		for rows.Next() {
-			var follower string
-			rows.Scan(&follower)
-			followers = append(followers, follower)
-		}
-		rows.Close()
-		break
+	rows, _ := connections.Mysql.Query("SELECT follower FROM follows WHERE followee = ?", user)
+	for rows.Next() {
+		var follower string
+		rows.Scan(&follower)
+		followers = append(followers, follower)
 	}
+	rows.Close()
 	return followers
 }
 
 func GetFollowing(user string) []string {
 	var followees []string
-	for _, db := range connections.Mysql {
-		rows, err := db.Query("SELECT followee FROM follows WHERE follower = ?", user)
-		if err != nil {
-			continue
-		}
-		for rows.Next() {
-			var followee string
-			rows.Scan(&followee)
-			followees = append(followees, followee)
-		}
-		rows.Close()
-		break
+	rows, _ := connections.Mysql.Query("SELECT followee FROM follows WHERE follower = ?", user)
+	for rows.Next() {
+		var followee string
+		rows.Scan(&followee)
+		followees = append(followees, followee)
 	}
+	rows.Close()
 	return followees
 }
 

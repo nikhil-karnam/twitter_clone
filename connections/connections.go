@@ -34,11 +34,10 @@ func Open(addr string) *sql.DB {
 	return db
 }
 
-var Mysql = [3]*sql.DB{
-	Open(os.Getenv("MYSQL0_ADDR")),
-	Open(os.Getenv("MYSQL1_ADDR")),
-	Open(os.Getenv("MYSQL2_ADDR")),
-}
+//we only need to connect to the primary port for reads and writes.
+//when primary dies, another surviving node will automatically get rotated to primary port.
+var Mysql = Open(os.Getenv("MYSQL_ADDR"))
+
 var Tweets = [3]pb.TweetsClient{
 	Connect(os.Getenv("TWEET0_ADDR")),
 	Connect(os.Getenv("TWEET1_ADDR")),

@@ -18,12 +18,8 @@ spec:
         env:
         - name: REDIS_ADDR
           value: REDIS_ADDR_HERE
-        - name: MYSQL0_ADDR
-          value: mysql-0.mysql-instances:3306
-        - name: MYSQL1_ADDR
-          value: mysql-1.mysql-instances:3306
-        - name: MYSQL2_ADDR
-          value: mysql-2.mysql-instances:3306
+        - name: MYSQL_ADDR
+          value: mysql:6446
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
