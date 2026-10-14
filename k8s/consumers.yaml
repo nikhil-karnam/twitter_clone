@@ -18,7 +18,16 @@ spec:
         env:
         - name: REDIS_ADDR
           value: REDIS_ADDR_HERE
-        - name: FOLLOWS_ADDR
-          value: follows-0.follows:50051
+        - name: MYSQL0_ADDR
+          value: mysql-0.mysql-instances:3306
+        - name: MYSQL1_ADDR
+          value: mysql-1.mysql-instances:3306
+        - name: MYSQL2_ADDR
+          value: mysql-2.mysql-instances:3306
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-root
+              key: rootPassword
         - name: KAFKA_ADDRS
           value: kafka-0.kafka:9092

@@ -9,17 +9,12 @@ import (
 	"sort"
 	"strconv"
 	"time"
-	"io"
 
 	"github.com/segmentio/kafka-go"
 	"twitter_clone/connections"
 	pb "twitter_clone/tweets"
 )
 
-
-func CreateUser(user string) {
-	connections.Users.Put(connections.Ctx, &pb.PutRequest{Key: []byte(user), Value: []byte("0"), Sync: true})
-}
 
 func Signup(user, email string) bool {
 	//give up after 2s so signups fail when 2+ nodes are down
@@ -30,7 +25,6 @@ func Signup(user, email string) bool {
 	for _, db := range connections.Mysql {
 		_, err := db.ExecContext(c, "INSERT INTO users (email, username) VALUES (?, ?)", email, user)
 		if err == nil {
-			CreateUser(user)
 			return true
 		}
 	}
@@ -48,17 +42,23 @@ func SignupLeaderless(user, email string) bool {
 		}(db)
 	}
 	<-done
-	CreateUser(user)
 	return true
 }
 
 func Follow(user, target string) {
-	if !UserExists(user) || !UserExists(target) || IsFollowing(user, target) {
+	if !UserExists(user) || !UserExists(target) {
 		return
 	}
-	connections.Follows.Put(connections.Ctx, &pb.PutRequest{Key: []byte("follower:" + target + ":" + user), Sync: true})
-	connections.Follows.Put(connections.Ctx, &pb.PutRequest{Key: []byte("following:" + user + ":" + target), Sync: true})
-	connections.Users.Put(connections.Ctx, &pb.PutRequest{Key: []byte(target), Value: []byte(strconv.Itoa(GetFollowerCount(target) + 1)), Sync: true})
+	for _, db := range connections.Mysql {
+		tx, _ := db.Begin()
+		if _, err := tx.Exec("INSERT INTO follows (follower, followee) VALUES (?, ?)", user, target); err != nil {
+			tx.Rollback()
+			continue
+		}
+		tx.Exec("UPDATE users SET follower_count = follower_count + 1 WHERE username = ?", target)
+		tx.Commit()
+		return
+	}
 }
 
 func Tweet(user, tweet string) {
@@ -133,54 +133,63 @@ func PrintTime(nanos int64) {
 }
 
 func UserExists(user string) bool {
-	reply, _ := connections.Users.Get(connections.Ctx, &pb.GetRequest{Key: []byte(user)})
-	return reply.Found
+	for _, db := range connections.Mysql {
+		var n int
+		if db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", user).Scan(&n) == nil {
+			return n > 0
+		}
+	}
+	return false
 }
 
 func GetFollowerCount(user string) int {
-	reply, _ := connections.Users.Get(connections.Ctx, &pb.GetRequest{Key: []byte(user)})
-	if !reply.Found {
-		return 0
+	for _, db := range connections.Mysql {
+		var count int
+		if db.QueryRow("SELECT follower_count FROM users WHERE username = ?", user).Scan(&count) == nil {
+			return count
+		}
 	}
-	count, _ := strconv.Atoi(string(reply.Value))
-	return count
-}
-
-func IsFollowing(user, target string) bool {
-	reply, _ := connections.Follows.Get(connections.Ctx, &pb.GetRequest{Key: []byte("following:" + user + ":" + target)})
-	return reply.Found
+	return 0
 }
 
 func IsCeleb(user string) bool {
 	return GetFollowerCount(user) >= 1000
 }
 
-func GetFollowers(user string) {
-	stream, _ := connections.Follows.Scan(connections.Ctx, &pb.ScanRequest{
-		Lower: []byte("follower:" + user + ":"),
-		Upper: []byte("follower:" + user + ";"),
-	})
-	for {
-		kv, err := stream.Recv()
-		if err == io.EOF {
-			break
+func GetFollowers(user string) []string {
+	var followers []string
+	for _, db := range connections.Mysql {
+		rows, err := db.Query("SELECT follower FROM follows WHERE followee = ?", user)
+		if err != nil {
+			continue
 		}
-		fmt.Println(string(kv.Key[len("follower:"+user+":"):]))
+		for rows.Next() {
+			var follower string
+			rows.Scan(&follower)
+			followers = append(followers, follower)
+		}
+		rows.Close()
+		break
 	}
+	return followers
 }
 
-func GetFollowing(user string) {
-	stream, _ := connections.Follows.Scan(connections.Ctx, &pb.ScanRequest{
-		Lower: []byte("following:" + user + ":"),
-		Upper: []byte("following:" + user + ";"),
-	})
-	for {
-		kv, err := stream.Recv()
-		if err == io.EOF {
-			break
+func GetFollowing(user string) []string {
+	var followees []string
+	for _, db := range connections.Mysql {
+		rows, err := db.Query("SELECT followee FROM follows WHERE follower = ?", user)
+		if err != nil {
+			continue
 		}
-		fmt.Println(string(kv.Key[len("following:"+user+":"):]))
+		for rows.Next() {
+			var followee string
+			rows.Scan(&followee)
+			followees = append(followees, followee)
+		}
+		rows.Close()
+		break
 	}
+	return followees
 }
 
 func GetProfile(user, target string) {
@@ -234,17 +243,8 @@ func OpenMail(user string) {
 	}
 
 	var celebTweets []connections.Mail
-	stream, _ := connections.Follows.Scan(connections.Ctx, &pb.ScanRequest{
-		Lower: []byte("following:" + user + ":"),
-		Upper: []byte("following:" + user + ";"),
-	})
 	//for every followee
-	for {
-		kv, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		followee := string(kv.Key[len("following:"+user+":"):])
+	for _, followee := range GetFollowing(user) {
 		//collect the celeb's latest tweet as a mail struct
 		//OR if redis is down collect each followee's latest tweet anyways
 		if redisErr != nil || IsCeleb(followee) {

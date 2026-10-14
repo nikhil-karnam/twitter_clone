@@ -34,8 +34,6 @@ func Open(addr string) *sql.DB {
 	return db
 }
 
-var Users = Connect(os.Getenv("USERS_ADDR"))
-var Follows = Connect(os.Getenv("FOLLOWS_ADDR"))
 var Mysql = [3]*sql.DB{
 	Open(os.Getenv("MYSQL0_ADDR")),
 	Open(os.Getenv("MYSQL1_ADDR")),
