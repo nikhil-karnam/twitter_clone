@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"time"
+	"strings"
 
 	"github.com/segmentio/kafka-go"
 	"twitter_clone/connections"
@@ -16,11 +17,18 @@ import (
 )
 
 
-func Signup(user, email string) bool {
+func SignupBatch(users, emails []string) bool {
 	//if 2+ nodes are down, insert will timeout as it should.
 	c, cancel := context.WithTimeout(connections.Ctx, 2*time.Second)
 	defer cancel()
-	_, err := connections.Mysql.ExecContext(c, "INSERT INTO users (email, username) VALUES (?, ?)", email, user)
+
+	var values []any
+	for i := range users {
+		values = append(values, users[i], emails[i])
+	}
+	query := "INSERT INTO users (username, email) VALUES" + strings.Repeat(" (?, ?),", len(users))
+
+	_, err := connections.Mysql.ExecContext(c, strings.TrimSuffix(query, ","), values...)
 	return err == nil
 }
 
@@ -38,16 +46,20 @@ func SignupLeaderless(user, email string) bool {
 	return true
 }
 
-func Follow(user, target string) {
-	if !UserExists(user) || !UserExists(target) {
-		return
+func FollowBatch(users, targets []string) {
+	insert := "INSERT INTO follows (user, target) VALUES" + strings.Repeat(" (?, ?),", len(users))
+	update := "UPDATE users SET follower_count = follower_count + 1 WHERE username IN (" + strings.Repeat("?, ", len(targets))
+	var pairs, followed []any
+	for i := range users {
+		pairs = append(pairs, users[i], targets[i])
+		followed = append(followed, targets[i])
 	}
 	tx, _ := connections.Mysql.Begin()
-	if _, err := tx.Exec("INSERT INTO follows (follower, followee) VALUES (?, ?)", user, target); err != nil {
+	if _, err := tx.Exec(strings.TrimSuffix(insert, ","), pairs...); err != nil {
 		tx.Rollback()
 		return
 	}
-	tx.Exec("UPDATE users SET follower_count = follower_count + 1 WHERE username = ?", target)
+	tx.Exec(strings.TrimSuffix(update, ", ")+")", followed...)
 	tx.Commit()
 }
 
@@ -140,7 +152,7 @@ func IsCeleb(user string) bool {
 
 func GetFollowers(user string) []string {
 	var followers []string
-	rows, _ := connections.Mysql.Query("SELECT follower FROM follows WHERE followee = ?", user)
+	rows, _ := connections.Mysql.Query("SELECT user FROM follows WHERE target = ?", user)
 	for rows.Next() {
 		var follower string
 		rows.Scan(&follower)
@@ -152,7 +164,7 @@ func GetFollowers(user string) []string {
 
 func GetFollowing(user string) []string {
 	var followees []string
-	rows, _ := connections.Mysql.Query("SELECT followee FROM follows WHERE follower = ?", user)
+	rows, _ := connections.Mysql.Query("SELECT user FROM follows WHERE target = ?", user)
 	for rows.Next() {
 		var followee string
 		rows.Scan(&followee)

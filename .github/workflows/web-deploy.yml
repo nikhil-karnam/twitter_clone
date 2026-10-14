@@ -1,0 +1,53 @@
+name: web-deploy
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.5
+          terraform_wrapper: false
+
+      - name: package node
+        working-directory: node
+        run: |
+          npm ci
+          node -e "const fs=require('fs');fs.writeFileSync('index.mjs', require('node:module').stripTypeScriptTypes(fs.readFileSync('index.ts','utf8')))"
+          cp ../api/api.proto .
+          zip -r ../terraform-web/node.zip index.mjs api.proto package.json node_modules
+
+      - name: terraform
+        id: tf
+        working-directory: terraform-web
+        run: |
+          terraform init
+          terraform apply -auto-approve
+          echo "lambda_url=$(terraform output -raw lambda_url)" >> $GITHUB_OUTPUT
+          echo "site_bucket=$(terraform output -raw site_bucket)" >> $GITHUB_OUTPUT
+
+      - name: build and upload react
+        working-directory: web
+        run: |
+          npm ci
+          VITE_LAMBDA_URL=${{ steps.tf.outputs.lambda_url }} npm run build
+          aws s3 sync dist s3://${{ steps.tf.outputs.site_bucket }} --delete

@@ -1,0 +1,32 @@
+name: web-destroy
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: web
+  cancel-in-progress: true
+
+jobs:
+  destroy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.5
+          terraform_wrapper: false
+
+      - name: terraform destroy
+        working-directory: terraform-web
+        run: |
+          touch node.zip
+          terraform init
+          terraform destroy -auto-approve

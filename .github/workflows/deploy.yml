@@ -59,6 +59,8 @@ jobs:
           docker push $REG/pebble-server:${{ github.sha }}
           docker build --build-arg CMD=consumer -t $REG/kafka-consumer:${{ github.sha }} .
           docker push $REG/kafka-consumer:${{ github.sha }}
+          docker build --build-arg CMD=api -t $REG/api:${{ github.sha }} .
+          docker push $REG/api:${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-24.04
@@ -82,3 +84,5 @@ jobs:
           kubectl create secret generic mysql-root --from-literal=rootUser=root --from-literal=rootHost=% --from-literal=rootPassword=${{ secrets.MYSQL_ROOT_PASSWORD }} --dry-run=client -o yaml | kubectl apply -f -
           sed -i "s|:latest|:${{ github.sha }}|; s|REDIS_ADDR_HERE|${{ needs.terraform.outputs.redis_addr }}|" k8s/*.yaml
           kubectl apply -f k8s/
+          until HOST=$(kubectl get svc api -o jsonpath="{.status.loadBalancer.ingress[0].hostname}") && [ -n "$HOST" ]; do sleep 5; done
+          aws lambda update-function-configuration --function-name twitter-clone-node --environment "Variables={API_ADDR=$HOST:50051}"

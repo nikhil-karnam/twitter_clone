@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "twitter_clone/api";
+
+service Api {
+  rpc Signup(Accounts) returns (Empty);
+  rpc Follow(Follows) returns (Empty);
+}
+
+message Accounts {
+  repeated string users = 1;
+  repeated string emails = 2;
+}
+message Follows {
+  repeated string users = 1;
+  repeated string targets = 2;
+}
+message Empty {}

@@ -1,2 +1,5 @@
 terraform/.terraform/
 terraform/*.tfstate*
+node/node_modules/
+terraform-web/.terraform/
+terraform-web/node.zip
