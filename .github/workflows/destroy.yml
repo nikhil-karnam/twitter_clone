@@ -29,6 +29,7 @@ jobs:
         run: |
           aws eks update-kubeconfig --name twitter-cluster --region us-east-2
           kubectl delete -f k8s/ --ignore-not-found
+          kubectl delete statefulset,service users follows --ignore-not-found
           kubectl delete pvc --all
           while [ -n "$(kubectl get pv -o name)" ]; do sleep 5; done
 
