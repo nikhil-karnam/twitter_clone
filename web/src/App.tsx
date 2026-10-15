@@ -9,15 +9,15 @@ function App() {
   return (
     <div style={{ display: "flex", justifyContent: "center", gap: 40 }}>
       <div>
-        <label>Amount: <input type="number" value={randos} onChange={(e) => setRandos(e.target.value)} /></label>{" "}
+        <label>Amount: <input style={{ width: 80 }} type="number" value={randos} onChange={(e) => setRandos(e.target.value)} /></label>{" "}
         <button onClick={() => fetch(url + "signup-randos?count=" + randos)}>Signup Randos</button>
       </div>
       <div>
-        <label>Amount: <input type="number" value={celebs} onChange={(e) => setCelebs(e.target.value)} /></label>{" "}
+        <label>Amount: <input style={{ width: 80 }} type="number" value={celebs} onChange={(e) => setCelebs(e.target.value)} /></label>{" "}
         <button onClick={() => fetch(url + "signup-celebs?count=" + celebs)}>Signup Celebs</button>
       </div>
       <div>
-        <label>Amount: <input type="number" value={follows} onChange={(e) => setFollows(e.target.value)} /></label>{" "}
+        <label>Amount: <input style={{ width: 80 }} type="number" value={follows} onChange={(e) => setFollows(e.target.value)} /></label>{" "}
         <button onClick={() => fetch(url + "follow?count=" + follows)}>Follow</button>
       </div>
     </div>
