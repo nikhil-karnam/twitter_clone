@@ -59,6 +59,15 @@ func (s *server) GetRandos(ctx context.Context, req *pb.Empty) (*pb.Users, error
 	return &pb.Users{Users: functionality.GetRandos()}, nil
 }
 
+func (s *server) OpenMail(ctx context.Context, req *pb.Username) (*pb.Timeline, error) {
+	return &pb.Timeline{Tweets: functionality.OpenMail(req.User)}, nil
+}
+
+func (s *server) GetProfile(ctx context.Context, req *pb.Username) (*pb.Timeline, error) {
+	return &pb.Timeline{Tweets: functionality.GetProfile(req.User)}, nil
+}
+
+
 func main() {
 	lis, _ := net.Listen("tcp", ":50051")
 	s := grpc.NewServer()

@@ -265,6 +265,94 @@ func (x *Tweets) GetTweets() []string {
 	return nil
 }
 
+type Username struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          string                 `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Username) Reset() {
+	*x = Username{}
+	mi := &file_api_api_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Username) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Username) ProtoMessage() {}
+
+func (x *Username) ProtoReflect() protoreflect.Message {
+	mi := &file_api_api_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Username.ProtoReflect.Descriptor instead.
+func (*Username) Descriptor() ([]byte, []int) {
+	return file_api_api_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *Username) GetUser() string {
+	if x != nil {
+		return x.User
+	}
+	return ""
+}
+
+type Timeline struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tweets        []string               `protobuf:"bytes,1,rep,name=tweets,proto3" json:"tweets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Timeline) Reset() {
+	*x = Timeline{}
+	mi := &file_api_api_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Timeline) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Timeline) ProtoMessage() {}
+
+func (x *Timeline) ProtoReflect() protoreflect.Message {
+	mi := &file_api_api_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Timeline.ProtoReflect.Descriptor instead.
+func (*Timeline) Descriptor() ([]byte, []int) {
+	return file_api_api_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Timeline) GetTweets() []string {
+	if x != nil {
+		return x.Tweets
+	}
+	return nil
+}
+
 type Empty struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -273,7 +361,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_api_api_proto_msgTypes[5]
+	mi := &file_api_api_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -285,7 +373,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_api_api_proto_msgTypes[5]
+	mi := &file_api_api_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -298,7 +386,7 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_api_api_proto_rawDescGZIP(), []int{5}
+	return file_api_api_proto_rawDescGZIP(), []int{7}
 }
 
 var File_api_api_proto protoreflect.FileDescriptor
@@ -318,8 +406,12 @@ const file_api_api_proto_rawDesc = "" +
 	"\x05value\x18\x01 \x01(\x03R\x05value\"6\n" +
 	"\x06Tweets\x12\x14\n" +
 	"\x05users\x18\x01 \x03(\tR\x05users\x12\x16\n" +
-	"\x06tweets\x18\x02 \x03(\tR\x06tweets\"\a\n" +
-	"\x05Empty2\xbb\x02\n" +
+	"\x06tweets\x18\x02 \x03(\tR\x06tweets\"\x1e\n" +
+	"\bUsername\x12\x12\n" +
+	"\x04user\x18\x01 \x01(\tR\x04user\"\"\n" +
+	"\bTimeline\x12\x16\n" +
+	"\x06tweets\x18\x01 \x03(\tR\x06tweets\"\a\n" +
+	"\x05Empty2\x91\x03\n" +
 	"\x03Api\x12#\n" +
 	"\x06Signup\x12\r.api.Accounts\x1a\n" +
 	".api.Empty\x12\"\n" +
@@ -340,7 +432,10 @@ const file_api_api_proto_rawDesc = "" +
 	".api.Users\x12#\n" +
 	"\tGetRandos\x12\n" +
 	".api.Empty\x1a\n" +
-	".api.UsersB\x13Z\x11twitter_clone/apib\x06proto3"
+	".api.Users\x12(\n" +
+	"\bOpenMail\x12\r.api.Username\x1a\r.api.Timeline\x12*\n" +
+	"\n" +
+	"GetProfile\x12\r.api.Username\x1a\r.api.TimelineB\x13Z\x11twitter_clone/apib\x06proto3"
 
 var (
 	file_api_api_proto_rawDescOnce sync.Once
@@ -354,37 +449,43 @@ func file_api_api_proto_rawDescGZIP() []byte {
 	return file_api_api_proto_rawDescData
 }
 
-var file_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_api_api_proto_goTypes = []any{
 	(*Accounts)(nil),  // 0: api.Accounts
 	(*Follows)(nil),   // 1: api.Follows
 	(*Users)(nil),     // 2: api.Users
 	(*Threshold)(nil), // 3: api.Threshold
 	(*Tweets)(nil),    // 4: api.Tweets
-	(*Empty)(nil),     // 5: api.Empty
+	(*Username)(nil),  // 5: api.Username
+	(*Timeline)(nil),  // 6: api.Timeline
+	(*Empty)(nil),     // 7: api.Empty
 }
 var file_api_api_proto_depIdxs = []int32{
-	0, // 0: api.Api.Signup:input_type -> api.Accounts
-	1, // 1: api.Api.Follow:input_type -> api.Follows
-	3, // 2: api.Api.SetThreshold:input_type -> api.Threshold
-	4, // 3: api.Api.SequentialTweet:input_type -> api.Tweets
-	4, // 4: api.Api.BurstTweet:input_type -> api.Tweets
-	5, // 5: api.Api.GetUsers:input_type -> api.Empty
-	5, // 6: api.Api.GetCelebs:input_type -> api.Empty
-	5, // 7: api.Api.GetRandos:input_type -> api.Empty
-	5, // 8: api.Api.Signup:output_type -> api.Empty
-	5, // 9: api.Api.Follow:output_type -> api.Empty
-	5, // 10: api.Api.SetThreshold:output_type -> api.Empty
-	5, // 11: api.Api.SequentialTweet:output_type -> api.Empty
-	5, // 12: api.Api.BurstTweet:output_type -> api.Empty
-	2, // 13: api.Api.GetUsers:output_type -> api.Users
-	2, // 14: api.Api.GetCelebs:output_type -> api.Users
-	2, // 15: api.Api.GetRandos:output_type -> api.Users
-	8, // [8:16] is the sub-list for method output_type
-	0, // [0:8] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: api.Api.Signup:input_type -> api.Accounts
+	1,  // 1: api.Api.Follow:input_type -> api.Follows
+	3,  // 2: api.Api.SetThreshold:input_type -> api.Threshold
+	4,  // 3: api.Api.SequentialTweet:input_type -> api.Tweets
+	4,  // 4: api.Api.BurstTweet:input_type -> api.Tweets
+	7,  // 5: api.Api.GetUsers:input_type -> api.Empty
+	7,  // 6: api.Api.GetCelebs:input_type -> api.Empty
+	7,  // 7: api.Api.GetRandos:input_type -> api.Empty
+	5,  // 8: api.Api.OpenMail:input_type -> api.Username
+	5,  // 9: api.Api.GetProfile:input_type -> api.Username
+	7,  // 10: api.Api.Signup:output_type -> api.Empty
+	7,  // 11: api.Api.Follow:output_type -> api.Empty
+	7,  // 12: api.Api.SetThreshold:output_type -> api.Empty
+	7,  // 13: api.Api.SequentialTweet:output_type -> api.Empty
+	7,  // 14: api.Api.BurstTweet:output_type -> api.Empty
+	2,  // 15: api.Api.GetUsers:output_type -> api.Users
+	2,  // 16: api.Api.GetCelebs:output_type -> api.Users
+	2,  // 17: api.Api.GetRandos:output_type -> api.Users
+	6,  // 18: api.Api.OpenMail:output_type -> api.Timeline
+	6,  // 19: api.Api.GetProfile:output_type -> api.Timeline
+	10, // [10:20] is the sub-list for method output_type
+	0,  // [0:10] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_api_api_proto_init() }
@@ -398,7 +499,7 @@ func file_api_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_api_proto_rawDesc), len(file_api_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

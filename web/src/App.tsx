@@ -28,10 +28,16 @@ function App() {
   const [userType, setUserType] = useState(0);
   const [burstMode, setBurstMode] = useState(0);
   const url = import.meta.env.VITE_LAMBDA_URL;
+  const [username, setUsername] = useState("");
+  const [timeline, setTimeline] = useState<string[]>([]);
 
   function changeFanoutMode(position: number) {
     setFanoutMode(position);
     fetch(url + "threshold?threshold=" + thresholds[position]);
+  }
+
+  function loadTimeline(path: string) {
+    fetch(url + path + "?user=" + username).then((res) => res.json()).then(setTimeline);
   }
 
   return (
@@ -50,12 +56,20 @@ function App() {
         <div>
           <button onClick={() => fetch(url + "tweet?userType=" + (userType === 1 ? "celebs" : "randos") + "&burstMode=" + (burstMode === 1))}>Tweet</button>
         </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10 }}>
           <Panel options={userTypes} selected={userType} onSelect={setUserType} />
           <Panel options={burstModes} selected={burstMode} onSelect={setBurstMode} />
           <Panel options={fanoutModes} selected={fanoutMode} onSelect={changeFanoutMode} />
         </div>
       </div>
+      <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 40 }}>
+        <label>Username: <input style={{ width: 120 }} value={username} onChange={(e) => setUsername(e.target.value)} /></label>
+        <button onClick={() => loadTimeline("feed")}>Load Feed</button>
+        <button onClick={() => loadTimeline("profile")}>Get Profile</button>
+      </div>
+      <ul style={{ width: 400, margin: "20px auto", textAlign: "left" }}>
+        {timeline.map((tweet, i) => <li key={i}>{tweet}</li>)}
+      </ul>
     </div>
   );
 }

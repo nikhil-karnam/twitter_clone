@@ -213,11 +213,7 @@ func GetFollowing(user string) []string {
 	return followees
 }
 
-func GetProfile(user, target string) {
-	if !UserExists(user) || !UserExists(target) {
-		return
-	}
-
+func GetProfile(target string) []string {
 	//naw screw 3 pointer merge sort. we just put everything into a map from all 3 db and sort
 	all := map[string]string{}
 	for _, db := range connections.Tweets {
@@ -237,20 +233,21 @@ func GetProfile(user, target string) {
 		}
 	}
 
+	var profile []string
 	for _, k := range slices.Sorted(maps.Keys(all)) {
 		nanos, _ := strconv.ParseInt(k[len(target+":"):], 10, 64)
-		PrintTime(nanos)
-		fmt.Println(all[k])
+		profile = append(profile, time.Unix(0, nanos).Format("15:04")+" "+all[k])
 	}
+	return profile
 }
 
-func OpenMail(user string) {
+func OpenMail(user string) []string {
 	if !UserExists(user) {
-		return
+		return nil
 	}
 
 	var mailbox []connections.Mail
-	//hashset to remove duplicate mails in feed to handle a lack of idempotency on fan-out
+	//hashset storing what tweets have been seen, to deduplicate non-idempotent mail
 	seen := map[string]bool{}
 	texts, redisErr := connections.Redis.LRange(connections.Ctx, "mailbox:"+user, 0, -1).Result()
 	for _, text := range texts {
@@ -264,7 +261,6 @@ func OpenMail(user string) {
 	}
 
 	var celebTweets []connections.Mail
-	//for every followee
 	for _, followee := range GetFollowing(user) {
 		//collect the celeb's latest tweet as a mail struct
 		//OR if redis is down collect each followee's latest tweet anyways
@@ -294,6 +290,7 @@ func OpenMail(user string) {
 	sort.Slice(celebTweets, func(i, j int) bool { return celebTweets[i].Time < celebTweets[j].Time })
 
 	//mergesort with two pointer
+	var feed []string
 	i, j := 0, 0
 	for i < len(mailbox) || j < len(celebTweets) {
 		var mail connections.Mail
@@ -304,7 +301,7 @@ func OpenMail(user string) {
 			mail = celebTweets[j]
 			j++
 		}
-		PrintTime(mail.Time)
-		fmt.Println(mail.User+":", mail.Tweet)
+		feed = append(feed, time.Unix(0, mail.Time).Format("15:04")+" "+mail.User+": "+mail.Tweet)
 	}
+	return feed
 }

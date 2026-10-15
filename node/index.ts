@@ -51,10 +51,19 @@ function getRandos(): Promise<string[]> {
   return new Promise((done) => api.GetRandos({}, (err: any, res: any) => done(res.users)));
 }
 
+function openMail(user: string): Promise<string[]> {
+  return new Promise((done) => api.OpenMail({ user }, (err: any, res: any) => done(res.tweets)));
+}
+
+function getProfile(user: string): Promise<string[]> {
+  return new Promise((done) => api.GetProfile({ user }, (err: any, res: any) => done(res.tweets)));
+}
 
 export async function handler(event: any) {
   if (event.rawPath === "/signup") await signup(Number(event.queryStringParameters.amount));
   if (event.rawPath === "/follow") await follow(Number(event.queryStringParameters.amount));
   if (event.rawPath === "/threshold") await setThreshold(Number(event.queryStringParameters.threshold));
   if (event.rawPath === "/tweet") await tweet(event.queryStringParameters.userType, event.queryStringParameters.burstMode === "true");
+  if (event.rawPath === "/feed") return await openMail(event.queryStringParameters.user);
+  if (event.rawPath === "/profile") return await getProfile(event.queryStringParameters.user);
 }

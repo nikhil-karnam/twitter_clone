@@ -27,6 +27,8 @@ const (
 	Api_GetUsers_FullMethodName        = "/api.Api/GetUsers"
 	Api_GetCelebs_FullMethodName       = "/api.Api/GetCelebs"
 	Api_GetRandos_FullMethodName       = "/api.Api/GetRandos"
+	Api_OpenMail_FullMethodName        = "/api.Api/OpenMail"
+	Api_GetProfile_FullMethodName      = "/api.Api/GetProfile"
 )
 
 // ApiClient is the client API for Api service.
@@ -41,6 +43,8 @@ type ApiClient interface {
 	GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
 	GetCelebs(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
 	GetRandos(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
+	OpenMail(ctx context.Context, in *Username, opts ...grpc.CallOption) (*Timeline, error)
+	GetProfile(ctx context.Context, in *Username, opts ...grpc.CallOption) (*Timeline, error)
 }
 
 type apiClient struct {
@@ -131,6 +135,26 @@ func (c *apiClient) GetRandos(ctx context.Context, in *Empty, opts ...grpc.CallO
 	return out, nil
 }
 
+func (c *apiClient) OpenMail(ctx context.Context, in *Username, opts ...grpc.CallOption) (*Timeline, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Timeline)
+	err := c.cc.Invoke(ctx, Api_OpenMail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) GetProfile(ctx context.Context, in *Username, opts ...grpc.CallOption) (*Timeline, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Timeline)
+	err := c.cc.Invoke(ctx, Api_GetProfile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ApiServer is the server API for Api service.
 // All implementations must embed UnimplementedApiServer
 // for forward compatibility.
@@ -143,6 +167,8 @@ type ApiServer interface {
 	GetUsers(context.Context, *Empty) (*Users, error)
 	GetCelebs(context.Context, *Empty) (*Users, error)
 	GetRandos(context.Context, *Empty) (*Users, error)
+	OpenMail(context.Context, *Username) (*Timeline, error)
+	GetProfile(context.Context, *Username) (*Timeline, error)
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -176,6 +202,12 @@ func (UnimplementedApiServer) GetCelebs(context.Context, *Empty) (*Users, error)
 }
 func (UnimplementedApiServer) GetRandos(context.Context, *Empty) (*Users, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetRandos not implemented")
+}
+func (UnimplementedApiServer) OpenMail(context.Context, *Username) (*Timeline, error) {
+	return nil, status.Error(codes.Unimplemented, "method OpenMail not implemented")
+}
+func (UnimplementedApiServer) GetProfile(context.Context, *Username) (*Timeline, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetProfile not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 func (UnimplementedApiServer) testEmbeddedByValue()             {}
@@ -342,6 +374,42 @@ func _Api_GetRandos_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Api_OpenMail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Username)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).OpenMail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Api_OpenMail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).OpenMail(ctx, req.(*Username))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_GetProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Username)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).GetProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Api_GetProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).GetProfile(ctx, req.(*Username))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -380,6 +448,14 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRandos",
 			Handler:    _Api_GetRandos_Handler,
+		},
+		{
+			MethodName: "OpenMail",
+			Handler:    _Api_OpenMail_Handler,
+		},
+		{
+			MethodName: "GetProfile",
+			Handler:    _Api_GetProfile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
