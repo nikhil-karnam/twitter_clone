@@ -4,8 +4,7 @@ const modes = ["Mail to nobody", "Hybrid", "Mail to everybody"];
 const thresholds = [0, 1000, 1e9];
 
 function App() {
-  const [randos, setRandos] = useState("");
-  const [celebs, setCelebs] = useState("");
+  const [users, setUsers] = useState("");
   const [follows, setFollows] = useState("");
   const [mode, setMode] = useState(1);
   const url = import.meta.env.VITE_LAMBDA_URL;
@@ -19,12 +18,8 @@ function App() {
     <div>
       <div style={{ display: "flex", justifyContent: "center", gap: 40 }}>
         <div>
-          <label>Amount: <input style={{ width: 80 }} type="number" value={randos} onChange={(e) => setRandos(e.target.value)} /></label>{" "}
-          <button onClick={() => fetch(url + "signup-randos?count=" + randos)}>Signup Randos</button>
-        </div>
-        <div>
-          <label>Amount: <input style={{ width: 80 }} type="number" value={celebs} onChange={(e) => setCelebs(e.target.value)} /></label>{" "}
-          <button onClick={() => fetch(url + "signup-celebs?count=" + celebs)}>Signup Celebs</button>
+          <label>Amount: <input style={{ width: 80 }} type="number" value={users} onChange={(e) => setUsers(e.target.value)} /></label>{" "}
+          <button onClick={() => fetch(url + "signup?count=" + users)}>Signup</button>
         </div>
         <div>
           <label>Amount: <input style={{ width: 80 }} type="number" value={follows} onChange={(e) => setFollows(e.target.value)} /></label>{" "}

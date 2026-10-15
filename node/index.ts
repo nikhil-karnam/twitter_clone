@@ -9,10 +9,9 @@ function getUsers(): Promise<string[]> {
   return new Promise((done) => api.GetUsers({}, (err: any, res: any) => done(res.users)));
 }
 
-async function signup(prefix: string, count: number) {
+async function signup(count: number) {
   const everyone = await getUsers();
-  const start = everyone.filter((name) => name.startsWith(prefix)).length;
-  const users = _.range(start, start + count).map((i) => prefix + i);
+  const users = _.range(everyone.length, everyone.length + count).map((i) => "user" + i);
   const emails = users.map((name) => name + "@test.com");
 
   await new Promise((done) => api.Signup({ users, emails }, done));
@@ -20,8 +19,8 @@ async function signup(prefix: string, count: number) {
 
 async function follow(count: number) {
   const everyone = await getUsers();
-  const randos = everyone.filter((name) => name.startsWith("user"));
-  const celebs = everyone.filter((name) => name.startsWith("celeb"));
+  const celebs = everyone.slice(-10);
+  const randos = everyone.slice(0, -10);
 
   for (const user of randos) {
     const targets = [..._.sampleSize(_.without(randos, user), count), ...celebs];
@@ -37,8 +36,7 @@ async function setThreshold(value: number) {
 export async function handler(event: any) {
   const count = Number(event.queryStringParameters.count);
   const value = Number(event.queryStringParameters.value);
-  if (event.rawPath === "/signup-randos") await signup("user", count);
-  if (event.rawPath === "/signup-celebs") await signup("celeb", count);
+  if (event.rawPath === "/signup") await signup(count);
   if (event.rawPath === "/follow") await follow(count);
   if (event.rawPath === "/threshold") await setThreshold(value);
 }
