@@ -30,10 +30,15 @@ async function follow(count: number) {
   }
 }
 
+async function setThreshold(value: number) {
+  await new Promise((done) => api.SetThreshold({ value }, done));
+}
+
 export async function handler(event: any) {
   const count = Number(event.queryStringParameters.count);
+  const value = Number(event.queryStringParameters.value);
   if (event.rawPath === "/signup-randos") await signup("user", count);
   if (event.rawPath === "/signup-celebs") await signup("celeb", count);
   if (event.rawPath === "/follow") await follow(count);
-  if (event.rawPath === "/threshold") await new Promise((done) => api.SetThreshold({ value: Number(event.queryStringParameters.value) }, done));
+  if (event.rawPath === "/threshold") await setThreshold(value);
 }
