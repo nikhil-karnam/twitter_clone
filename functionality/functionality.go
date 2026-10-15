@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"sort"
 	"strconv"
 	"time"
 	"strings"
@@ -234,10 +233,11 @@ func GetProfile(target string) []string {
 	}
 
 	var profile []string
-	for _, k := range slices.Sorted(maps.Keys(all)) {
+	for _, k := range slices.Backward(slices.Sorted(maps.Keys(all))) {
 		nanos, _ := strconv.ParseInt(k[len(target+":"):], 10, 64)
 		profile = append(profile, time.Unix(0, nanos).Format("15:04")+" "+all[k])
 	}
+	
 	return profile
 }
 
@@ -246,21 +246,16 @@ func OpenMail(user string) []string {
 		return nil
 	}
 
-	var mailbox []connections.Mail
-	//hashset storing what tweets have been seen, to deduplicate non-idempotent mail
-	seen := map[string]bool{}
+	//keyed by time then user
+	//map automatically deduplicates non-idempotent mail
+	all := map[string]connections.Mail{}
 	texts, redisErr := connections.Redis.LRange(connections.Ctx, "mailbox:"+user, 0, -1).Result()
 	for _, text := range texts {
-		if seen[text] {
-			continue
-		}
-		seen[text] = true
 		var mail connections.Mail
 		json.Unmarshal([]byte(text), &mail)
-		mailbox = append(mailbox, mail)
+		all[fmt.Sprintf("%020d:%s", mail.Time, mail.User)] = mail
 	}
 
-	var celebTweets []connections.Mail
 	for _, followee := range GetFollowing(user) {
 		//collect the celeb's latest tweet as a mail struct
 		//OR if redis is down collect each followee's latest tweet anyways
@@ -283,24 +278,17 @@ func OpenMail(user string) []string {
 				}
 			}
 			if hasTweeted {
-				celebTweets = append(celebTweets, newest)
+				all[fmt.Sprintf("%020d:%s", newest.Time, newest.User)] = newest
 			}
 		}
 	}
-	sort.Slice(celebTweets, func(i, j int) bool { return celebTweets[i].Time < celebTweets[j].Time })
 
-	//mergesort with two pointer
 	var feed []string
-	i, j := 0, 0
-	for i < len(mailbox) || j < len(celebTweets) {
-		var mail connections.Mail
-		if j == len(celebTweets) || (i < len(mailbox) && mailbox[i].Time < celebTweets[j].Time) {
-			mail = mailbox[i]
-			i++
-		} else {
-			mail = celebTweets[j]
-			j++
+	for _, k := range slices.Backward(slices.Sorted(maps.Keys(all))) {
+		if len(feed) == 20 {
+			break
 		}
+		mail := all[k]
 		feed = append(feed, time.Unix(0, mail.Time).Format("15:04")+" "+mail.User+": "+mail.Tweet)
 	}
 	return feed
