@@ -22,12 +22,13 @@ function Panel({ options, selected, onSelect }: { options: string[]; selected: n
 }
 
 function App() {
+  const url = import.meta.env.VITE_LAMBDA_URL;
+
   const [signupAmount, setSignupAmount] = useState("");
   const [followAmount, setFollowAmount] = useState("");
   const [fanoutMode, setFanoutMode] = useState(1);
   const [userType, setUserType] = useState(0);
   const [burstMode, setBurstMode] = useState(0);
-  const url = import.meta.env.VITE_LAMBDA_URL;
   const [username, setUsername] = useState("");
   const [timeline, setTimeline] = useState<string[]>([]);
 
