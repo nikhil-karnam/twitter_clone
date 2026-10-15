@@ -17,6 +17,9 @@ import (
 )
 
 
+var CelebThreshold = 1000
+
+
 func SignupBatch(users, emails []string) bool {
 	//if 2+ nodes are down, insert will timeout as it should.
 	c, cancel := context.WithTimeout(connections.Ctx, 2*time.Second)
@@ -145,8 +148,6 @@ func GetFollowerCount(user string) int {
 	connections.Mysql.QueryRow("SELECT follower_count FROM users WHERE username = ?", user).Scan(&count)
 	return count
 }
-
-var CelebThreshold = 1000
 
 func IsCeleb(user string) bool {
 	return GetFollowerCount(user) >= CelebThreshold

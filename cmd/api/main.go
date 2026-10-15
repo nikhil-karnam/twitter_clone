@@ -28,14 +28,14 @@ func (s *server) GetUsers(ctx context.Context, req *pb.Empty) (*pb.Users, error)
 	return &pb.Users{Users: functionality.GetUsers()}, nil
 }
 
+func (s *server) SetThreshold(ctx context.Context, req *pb.Threshold) (*pb.Empty, error) {
+	functionality.CelebThreshold = int(req.Value)
+	return &pb.Empty{}, nil
+}
+
 func main() {
 	lis, _ := net.Listen("tcp", ":50051")
 	s := grpc.NewServer()
 	pb.RegisterApiServer(s, &server{})
 	s.Serve(lis)
-}
-
-func (s *server) SetThreshold(ctx context.Context, req *pb.Threshold) (*pb.Empty, error) {
-	functionality.CelebThreshold = int(req.Value)
-	return &pb.Empty{}, nil
 }
