@@ -50,7 +50,7 @@ function App() {
         <div>
           <button onClick={() => fetch(url + "tweet?userType=" + (userType === 1 ? "celebs" : "randos") + "&burstMode=" + (burstMode === 1))}>Tweet</button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10 }}>
           <Panel options={userTypes} selected={userType} onSelect={setUserType} />
           <Panel options={burstModes} selected={burstMode} onSelect={setBurstMode} />
           <Panel options={fanoutModes} selected={fanoutMode} onSelect={changeFanoutMode} />
