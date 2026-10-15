@@ -165,6 +165,30 @@ func GetUsers() []string {
 	return users
 }
 
+func GetCelebs() []string {
+	var celebs []string
+	rows, _ := connections.Mysql.Query("SELECT username FROM users WHERE follower_count >= ?", CelebThreshold)
+	for rows.Next() {
+		var celeb string
+		rows.Scan(&celeb)
+		celebs = append(celebs, celeb)
+	}
+	rows.Close()
+	return celebs
+}
+
+func GetRandos() []string {
+	var randos []string
+	rows, _ := connections.Mysql.Query("SELECT username FROM users WHERE follower_count < ?", CelebThreshold)
+	for rows.Next() {
+		var rando string
+		rows.Scan(&rando)
+		randos = append(randos, rando)
+	}
+	rows.Close()
+	return randos
+}
+
 func GetFollowers(user string) []string {
 	var followers []string
 	rows, _ := connections.Mysql.Query("SELECT user FROM follows WHERE target = ?", user)

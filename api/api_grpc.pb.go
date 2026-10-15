@@ -19,10 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Api_Signup_FullMethodName       = "/api.Api/Signup"
-	Api_Follow_FullMethodName       = "/api.Api/Follow"
-	Api_GetUsers_FullMethodName     = "/api.Api/GetUsers"
-	Api_SetThreshold_FullMethodName = "/api.Api/SetThreshold"
+	Api_Signup_FullMethodName          = "/api.Api/Signup"
+	Api_Follow_FullMethodName          = "/api.Api/Follow"
+	Api_SetThreshold_FullMethodName    = "/api.Api/SetThreshold"
+	Api_SequentialTweet_FullMethodName = "/api.Api/SequentialTweet"
+	Api_BurstTweet_FullMethodName      = "/api.Api/BurstTweet"
+	Api_GetUsers_FullMethodName        = "/api.Api/GetUsers"
+	Api_GetCelebs_FullMethodName       = "/api.Api/GetCelebs"
+	Api_GetRandos_FullMethodName       = "/api.Api/GetRandos"
 )
 
 // ApiClient is the client API for Api service.
@@ -31,8 +35,12 @@ const (
 type ApiClient interface {
 	Signup(ctx context.Context, in *Accounts, opts ...grpc.CallOption) (*Empty, error)
 	Follow(ctx context.Context, in *Follows, opts ...grpc.CallOption) (*Empty, error)
-	GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
 	SetThreshold(ctx context.Context, in *Threshold, opts ...grpc.CallOption) (*Empty, error)
+	SequentialTweet(ctx context.Context, in *Tweets, opts ...grpc.CallOption) (*Empty, error)
+	BurstTweet(ctx context.Context, in *Tweets, opts ...grpc.CallOption) (*Empty, error)
+	GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
+	GetCelebs(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
+	GetRandos(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
 }
 
 type apiClient struct {
@@ -63,6 +71,36 @@ func (c *apiClient) Follow(ctx context.Context, in *Follows, opts ...grpc.CallOp
 	return out, nil
 }
 
+func (c *apiClient) SetThreshold(ctx context.Context, in *Threshold, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Api_SetThreshold_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) SequentialTweet(ctx context.Context, in *Tweets, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Api_SequentialTweet_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) BurstTweet(ctx context.Context, in *Tweets, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Api_BurstTweet_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *apiClient) GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Users)
@@ -73,10 +111,20 @@ func (c *apiClient) GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOp
 	return out, nil
 }
 
-func (c *apiClient) SetThreshold(ctx context.Context, in *Threshold, opts ...grpc.CallOption) (*Empty, error) {
+func (c *apiClient) GetCelebs(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, Api_SetThreshold_FullMethodName, in, out, cOpts...)
+	out := new(Users)
+	err := c.cc.Invoke(ctx, Api_GetCelebs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) GetRandos(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Users)
+	err := c.cc.Invoke(ctx, Api_GetRandos_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +137,12 @@ func (c *apiClient) SetThreshold(ctx context.Context, in *Threshold, opts ...grp
 type ApiServer interface {
 	Signup(context.Context, *Accounts) (*Empty, error)
 	Follow(context.Context, *Follows) (*Empty, error)
-	GetUsers(context.Context, *Empty) (*Users, error)
 	SetThreshold(context.Context, *Threshold) (*Empty, error)
+	SequentialTweet(context.Context, *Tweets) (*Empty, error)
+	BurstTweet(context.Context, *Tweets) (*Empty, error)
+	GetUsers(context.Context, *Empty) (*Users, error)
+	GetCelebs(context.Context, *Empty) (*Users, error)
+	GetRandos(context.Context, *Empty) (*Users, error)
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -107,11 +159,23 @@ func (UnimplementedApiServer) Signup(context.Context, *Accounts) (*Empty, error)
 func (UnimplementedApiServer) Follow(context.Context, *Follows) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method Follow not implemented")
 }
+func (UnimplementedApiServer) SetThreshold(context.Context, *Threshold) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetThreshold not implemented")
+}
+func (UnimplementedApiServer) SequentialTweet(context.Context, *Tweets) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method SequentialTweet not implemented")
+}
+func (UnimplementedApiServer) BurstTweet(context.Context, *Tweets) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method BurstTweet not implemented")
+}
 func (UnimplementedApiServer) GetUsers(context.Context, *Empty) (*Users, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUsers not implemented")
 }
-func (UnimplementedApiServer) SetThreshold(context.Context, *Threshold) (*Empty, error) {
-	return nil, status.Error(codes.Unimplemented, "method SetThreshold not implemented")
+func (UnimplementedApiServer) GetCelebs(context.Context, *Empty) (*Users, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetCelebs not implemented")
+}
+func (UnimplementedApiServer) GetRandos(context.Context, *Empty) (*Users, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetRandos not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 func (UnimplementedApiServer) testEmbeddedByValue()             {}
@@ -170,6 +234,60 @@ func _Api_Follow_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Api_SetThreshold_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Threshold)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).SetThreshold(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Api_SetThreshold_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).SetThreshold(ctx, req.(*Threshold))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_SequentialTweet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Tweets)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).SequentialTweet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Api_SequentialTweet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).SequentialTweet(ctx, req.(*Tweets))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_BurstTweet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Tweets)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).BurstTweet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Api_BurstTweet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).BurstTweet(ctx, req.(*Tweets))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Api_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
@@ -188,20 +306,38 @@ func _Api_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Api_SetThreshold_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Threshold)
+func _Api_GetCelebs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ApiServer).SetThreshold(ctx, in)
+		return srv.(ApiServer).GetCelebs(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Api_SetThreshold_FullMethodName,
+		FullMethod: Api_GetCelebs_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ApiServer).SetThreshold(ctx, req.(*Threshold))
+		return srv.(ApiServer).GetCelebs(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_GetRandos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).GetRandos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Api_GetRandos_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).GetRandos(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -222,12 +358,28 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Api_Follow_Handler,
 		},
 		{
+			MethodName: "SetThreshold",
+			Handler:    _Api_SetThreshold_Handler,
+		},
+		{
+			MethodName: "SequentialTweet",
+			Handler:    _Api_SequentialTweet_Handler,
+		},
+		{
+			MethodName: "BurstTweet",
+			Handler:    _Api_BurstTweet_Handler,
+		},
+		{
 			MethodName: "GetUsers",
 			Handler:    _Api_GetUsers_Handler,
 		},
 		{
-			MethodName: "SetThreshold",
-			Handler:    _Api_SetThreshold_Handler,
+			MethodName: "GetCelebs",
+			Handler:    _Api_GetCelebs_Handler,
+		},
+		{
+			MethodName: "GetRandos",
+			Handler:    _Api_GetRandos_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

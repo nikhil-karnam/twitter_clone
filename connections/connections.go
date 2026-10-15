@@ -37,6 +37,10 @@ func Open(addr string) *sql.DB {
 //we only need to connect to the primary port for reads and writes.
 //when primary dies, another surviving node will automatically get rotated to primary port.
 var Mysql = Open(os.Getenv("MYSQL_ADDR"))
+//queue queries past 100 so MySQL can handle the incoming load
+func init() {
+	Mysql.SetMaxOpenConns(100)
+}
 
 var Tweets = [3]pb.TweetsClient{
 	Connect(os.Getenv("TWEET0_ADDR")),

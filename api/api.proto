@@ -7,8 +7,13 @@ option go_package = "twitter_clone/api";
 service Api {
   rpc Signup(Accounts) returns (Empty);
   rpc Follow(Follows) returns (Empty);
-  rpc GetUsers(Empty) returns (Users);
   rpc SetThreshold(Threshold) returns (Empty);
+  rpc SequentialTweet(Tweets) returns (Empty);
+  rpc BurstTweet(Tweets) returns (Empty);
+
+  rpc GetUsers(Empty) returns (Users);
+  rpc GetCelebs(Empty) returns (Users);
+  rpc GetRandos(Empty) returns (Users);
 }
 
 message Accounts {
@@ -25,4 +30,10 @@ message Users {
 message Threshold {
   int64 value = 1;
 }
+
+message Tweets {
+  repeated string users = 1;
+  repeated string tweets = 2;
+}
+
 message Empty {}

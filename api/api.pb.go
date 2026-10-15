@@ -213,6 +213,58 @@ func (x *Threshold) GetValue() int64 {
 	return 0
 }
 
+type Tweets struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []string               `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	Tweets        []string               `protobuf:"bytes,2,rep,name=tweets,proto3" json:"tweets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tweets) Reset() {
+	*x = Tweets{}
+	mi := &file_api_api_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tweets) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tweets) ProtoMessage() {}
+
+func (x *Tweets) ProtoReflect() protoreflect.Message {
+	mi := &file_api_api_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tweets.ProtoReflect.Descriptor instead.
+func (*Tweets) Descriptor() ([]byte, []int) {
+	return file_api_api_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *Tweets) GetUsers() []string {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+func (x *Tweets) GetTweets() []string {
+	if x != nil {
+		return x.Tweets
+	}
+	return nil
+}
+
 type Empty struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -221,7 +273,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_api_api_proto_msgTypes[4]
+	mi := &file_api_api_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -233,7 +285,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_api_api_proto_msgTypes[4]
+	mi := &file_api_api_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -246,7 +298,7 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_api_api_proto_rawDescGZIP(), []int{4}
+	return file_api_api_proto_rawDescGZIP(), []int{5}
 }
 
 var File_api_api_proto protoreflect.FileDescriptor
@@ -263,18 +315,32 @@ const file_api_api_proto_rawDesc = "" +
 	"\x05Users\x12\x14\n" +
 	"\x05users\x18\x01 \x03(\tR\x05users\"!\n" +
 	"\tThreshold\x12\x14\n" +
-	"\x05value\x18\x01 \x01(\x03R\x05value\"\a\n" +
-	"\x05Empty2\x9e\x01\n" +
+	"\x05value\x18\x01 \x01(\x03R\x05value\"6\n" +
+	"\x06Tweets\x12\x14\n" +
+	"\x05users\x18\x01 \x03(\tR\x05users\x12\x16\n" +
+	"\x06tweets\x18\x02 \x03(\tR\x06tweets\"\a\n" +
+	"\x05Empty2\xbb\x02\n" +
 	"\x03Api\x12#\n" +
 	"\x06Signup\x12\r.api.Accounts\x1a\n" +
 	".api.Empty\x12\"\n" +
 	"\x06Follow\x12\f.api.Follows\x1a\n" +
+	".api.Empty\x12*\n" +
+	"\fSetThreshold\x12\x0e.api.Threshold\x1a\n" +
+	".api.Empty\x12*\n" +
+	"\x0fSequentialTweet\x12\v.api.Tweets\x1a\n" +
+	".api.Empty\x12%\n" +
+	"\n" +
+	"BurstTweet\x12\v.api.Tweets\x1a\n" +
 	".api.Empty\x12\"\n" +
 	"\bGetUsers\x12\n" +
 	".api.Empty\x1a\n" +
-	".api.Users\x12*\n" +
-	"\fSetThreshold\x12\x0e.api.Threshold\x1a\n" +
-	".api.EmptyB\x13Z\x11twitter_clone/apib\x06proto3"
+	".api.Users\x12#\n" +
+	"\tGetCelebs\x12\n" +
+	".api.Empty\x1a\n" +
+	".api.Users\x12#\n" +
+	"\tGetRandos\x12\n" +
+	".api.Empty\x1a\n" +
+	".api.UsersB\x13Z\x11twitter_clone/apib\x06proto3"
 
 var (
 	file_api_api_proto_rawDescOnce sync.Once
@@ -288,25 +354,34 @@ func file_api_api_proto_rawDescGZIP() []byte {
 	return file_api_api_proto_rawDescData
 }
 
-var file_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_api_api_proto_goTypes = []any{
 	(*Accounts)(nil),  // 0: api.Accounts
 	(*Follows)(nil),   // 1: api.Follows
 	(*Users)(nil),     // 2: api.Users
 	(*Threshold)(nil), // 3: api.Threshold
-	(*Empty)(nil),     // 4: api.Empty
+	(*Tweets)(nil),    // 4: api.Tweets
+	(*Empty)(nil),     // 5: api.Empty
 }
 var file_api_api_proto_depIdxs = []int32{
 	0, // 0: api.Api.Signup:input_type -> api.Accounts
 	1, // 1: api.Api.Follow:input_type -> api.Follows
-	4, // 2: api.Api.GetUsers:input_type -> api.Empty
-	3, // 3: api.Api.SetThreshold:input_type -> api.Threshold
-	4, // 4: api.Api.Signup:output_type -> api.Empty
-	4, // 5: api.Api.Follow:output_type -> api.Empty
-	2, // 6: api.Api.GetUsers:output_type -> api.Users
-	4, // 7: api.Api.SetThreshold:output_type -> api.Empty
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
+	3, // 2: api.Api.SetThreshold:input_type -> api.Threshold
+	4, // 3: api.Api.SequentialTweet:input_type -> api.Tweets
+	4, // 4: api.Api.BurstTweet:input_type -> api.Tweets
+	5, // 5: api.Api.GetUsers:input_type -> api.Empty
+	5, // 6: api.Api.GetCelebs:input_type -> api.Empty
+	5, // 7: api.Api.GetRandos:input_type -> api.Empty
+	5, // 8: api.Api.Signup:output_type -> api.Empty
+	5, // 9: api.Api.Follow:output_type -> api.Empty
+	5, // 10: api.Api.SetThreshold:output_type -> api.Empty
+	5, // 11: api.Api.SequentialTweet:output_type -> api.Empty
+	5, // 12: api.Api.BurstTweet:output_type -> api.Empty
+	2, // 13: api.Api.GetUsers:output_type -> api.Users
+	2, // 14: api.Api.GetCelebs:output_type -> api.Users
+	2, // 15: api.Api.GetRandos:output_type -> api.Users
+	8, // [8:16] is the sub-list for method output_type
+	0, // [0:8] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -323,7 +398,7 @@ func file_api_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_api_proto_rawDesc), len(file_api_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -5,9 +5,6 @@ import _ from "lodash";
 const proto: any = grpc.loadPackageDefinition(protoLoader.loadSync("api.proto", { arrays: true })).api;
 const api = new proto.Api(process.env.API_ADDR, grpc.credentials.createInsecure());
 
-function getUsers(): Promise<string[]> {
-  return new Promise((done) => api.GetUsers({}, (err: any, res: any) => done(res.users)));
-}
 
 async function signup(count: number) {
   const everyone = await getUsers();
@@ -33,10 +30,31 @@ async function setThreshold(value: number) {
   await new Promise((done) => api.SetThreshold({ value }, done));
 }
 
+async function tweet(userType: string, burstMode: boolean) {
+  const users = userType === "celebs" ? (await getCelebs()).flatMap((celeb) => _.times(10, () => celeb)) : await getRandos();
+  const tweets = users.map(() => "howdy world");
+  const method = burstMode ? "BurstTweet" : "SequentialTweet";
+
+  await new Promise((done) => api[method]({ users, tweets }, done));
+}
+
+//getters
+function getUsers(): Promise<string[]> {
+  return new Promise((done) => api.GetUsers({}, (err: any, res: any) => done(res.users)));
+}
+
+function getCelebs(): Promise<string[]> {
+  return new Promise((done) => api.GetCelebs({}, (err: any, res: any) => done(res.users)));
+}
+
+function getRandos(): Promise<string[]> {
+  return new Promise((done) => api.GetRandos({}, (err: any, res: any) => done(res.users)));
+}
+
+
 export async function handler(event: any) {
-  const count = Number(event.queryStringParameters.count);
-  const value = Number(event.queryStringParameters.value);
-  if (event.rawPath === "/signup") await signup(count);
-  if (event.rawPath === "/follow") await follow(count);
-  if (event.rawPath === "/threshold") await setThreshold(value);
+  if (event.rawPath === "/signup") await signup(Number(event.queryStringParameters.amount));
+  if (event.rawPath === "/follow") await follow(Number(event.queryStringParameters.amount));
+  if (event.rawPath === "/threshold") await setThreshold(Number(event.queryStringParameters.threshold));
+  if (event.rawPath === "/tweet") await tweet(event.queryStringParameters.userType, event.queryStringParameters.burstMode === "true");
 }
