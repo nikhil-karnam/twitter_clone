@@ -3,6 +3,7 @@ import { useState } from "react";
 function App() {
   const [randos, setRandos] = useState("");
   const [celebs, setCelebs] = useState("");
+  const [follows, setFollows] = useState("");
   const url = import.meta.env.VITE_LAMBDA_URL;
 
   return (
@@ -16,6 +17,11 @@ function App() {
         <button onClick={() => fetch(url + "signup-celebs?count=" + celebs)}>Signup Celebs</button>
         <br />
         <input type="number" value={celebs} onChange={(e) => setCelebs(e.target.value)} />
+      </div>
+      <div>
+        <button onClick={() => fetch(url + "follow?count=" + follows)}>Follow</button>
+        <br />
+        <input type="number" value={follows} onChange={(e) => setFollows(e.target.value)} />
       </div>
     </div>
   );
