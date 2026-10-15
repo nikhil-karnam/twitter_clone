@@ -44,7 +44,7 @@ func (s *server) BurstTweet(ctx context.Context, req *pb.Tweets) (*pb.Empty, err
 	}
 	wg.Wait()
 	return &pb.Empty{}, nil
-}
+}	
 
 //getters
 func (s *server) GetUsers(ctx context.Context, req *pb.Empty) (*pb.Users, error) {
