@@ -41,16 +41,16 @@ function App() {
         </div>
       </div>
       <div className="row">
-        <div>
-          <button onClick={() => fetch(url + "tweet?userType=" + (userType === 1 ? "celebs" : "randos") + "&burstMode=" + (burstMode === 1))}>Tweet</button>
-        </div>
         <div className="panels">
           <Panel options={userTypes} selected={userType} onSelect={setUserType} />
           <Panel options={burstModes} selected={burstMode} onSelect={setBurstMode} />
           <Panel options={fanoutModes} selected={fanoutMode} onSelect={(i) => { setFanoutMode(i); fetch(url + "threshold?threshold=" + thresholds[i]); }} />
         </div>
         <div>
-          <button onClick={() => fetch(url + "repair")}>Repair</button>
+          <button onClick={() => fetch(url + "tweet?userType=" + (userType === 1 ? "celebs" : "randos") + "&burstMode=" + (burstMode === 1))}>Tweet</button>
+        </div>
+        <div>
+          <button onClick={() => fetch(url + "repair")}>Repair Database</button>
         </div>
       </div>
       <div className="row tight">
