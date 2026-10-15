@@ -179,7 +179,7 @@ func GetFollowers(user string) []string {
 
 func GetFollowing(user string) []string {
 	var followees []string
-	rows, _ := connections.Mysql.Query("SELECT user FROM follows WHERE target = ?", user)
+	rows, _ := connections.Mysql.Query("SELECT target FROM follows WHERE user = ?", user)
 	for rows.Next() {
 		var followee string
 		rows.Scan(&followee)
