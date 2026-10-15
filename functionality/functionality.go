@@ -164,18 +164,6 @@ func GetFollowers(user string) []string {
 	return followers
 }
 
-func GetFollowing(user string) []string {
-	var followees []string
-	rows, _ := connections.Mysql.Query("SELECT target FROM follows WHERE user = ?", user)
-	for rows.Next() {
-		var followee string
-		rows.Scan(&followee)
-		followees = append(followees, followee)
-	}
-	rows.Close()
-	return followees
-}
-
 func GetProfile(target string) []string {
 	//naw screw 3 pointer merge sort. we just put everything into a map from all 3 db and sort
 	all := map[string]string{}
@@ -192,14 +180,14 @@ func GetProfile(target string) []string {
 			if err != nil {
 				break
 			}
-			all[string(kv.Key)] = string(kv.Value)
+			all[string(kv.Key[len(target+":"):])+":"+target] = string(kv.Value)
 		}
 	}
 
 	var profile []string
 	for _, k := range slices.Backward(slices.Sorted(maps.Keys(all))) {
-		nanos, _ := strconv.ParseInt(k[len(target+":"):], 10, 64)
-		profile = append(profile, time.Unix(0, nanos).Format("15:04")+" "+all[k])
+		nanos, _ := strconv.ParseInt(k[:20], 10, 64)
+		profile = append(profile, time.Unix(0, nanos).Format("15:04")+" "+k[21:]+": "+all[k])
 	}
 	
 	return profile
@@ -210,40 +198,49 @@ func OpenMail(user string) []string {
 		return nil
 	}
 
-	//keyed by time then user
+	//keyed by time and user
 	//map automatically deduplicates non-idempotent mail
-	all := map[string]connections.Mail{}
+	all := map[string]string{}
 	texts, redisErr := connections.Redis.LRange(connections.Ctx, "mailbox:"+user, 0, -1).Result()
 	for _, text := range texts {
 		var mail connections.Mail
 		json.Unmarshal([]byte(text), &mail)
-		all[fmt.Sprintf("%020d:%s", mail.Time, mail.User)] = mail
+		all[fmt.Sprintf("%020d:%s", mail.Time, mail.User)] = mail.Tweet
 	}
 
-	for _, followee := range GetFollowing(user) {
-		//collect the celeb's latest tweet as a mail struct
-		//OR if redis is down collect each followee's latest tweet anyways
-		if redisErr != nil || IsCeleb(followee) {
-			var newest connections.Mail
-			hasTweeted := false
-			//if one db is still recovery we don't know which is latest
-			//check all 3 dbs to determine latest
-			for _, db := range connections.Tweets {
-				reply, err := db.Last(connections.Ctx, &pb.ScanRequest{
-					Lower: []byte(followee + ":"),
-					Upper: []byte(followee + ";"),
-				})
-				if err == nil && reply.Found {
-					nanos, _ := strconv.ParseInt(string(reply.Kv.Key[len(followee+":"):]), 10, 64)
-					if !hasTweeted || nanos > newest.Time {
-						newest = connections.Mail{User: followee, Tweet: string(reply.Kv.Value), Time: nanos}
-						hasTweeted = true
-					}
+	var pull []string
+	rows, _ := connections.Mysql.Query("SELECT f.target, u.follower_count FROM follows f JOIN users u ON u.username = f.target WHERE f.user = ?", user)
+	for rows.Next() {
+		var followee string
+		var count int
+		rows.Scan(&followee, &count)
+		//collect whoever is a celeb or all if redis is down
+		if redisErr != nil || count >= CelebThreshold {
+			pull = append(pull, followee)
+		}
+	}
+	rows.Close()
+
+	for _, followee := range pull {
+		var newest connections.Mail
+		hasTweeted := false
+		//if one db is still recovery we don't know which is latest
+		//check all 3 dbs to determine latest
+		for _, db := range connections.Tweets {
+			reply, err := db.Last(connections.Ctx, &pb.ScanRequest{
+				Lower: []byte(followee + ":"),
+				Upper: []byte(followee + ";"),
+			})
+			if err == nil && reply.Found {
+				nanos, _ := strconv.ParseInt(string(reply.Kv.Key[len(followee+":"):]), 10, 64)
+				if !hasTweeted || nanos > newest.Time {
+					newest = connections.Mail{User: followee, Tweet: string(reply.Kv.Value), Time: nanos}
+					hasTweeted = true
 				}
 			}
-			if hasTweeted {
-				all[fmt.Sprintf("%020d:%s", newest.Time, newest.User)] = newest
-			}
+		}
+		if hasTweeted {
+			all[fmt.Sprintf("%020d:%s", newest.Time, newest.User)] = newest.Tweet
 		}
 	}
 
@@ -252,8 +249,8 @@ func OpenMail(user string) []string {
 		if len(feed) == 20 {
 			break
 		}
-		mail := all[k]
-		feed = append(feed, time.Unix(0, mail.Time).Format("15:04")+" "+mail.User+": "+mail.Tweet)
+		nanos, _ := strconv.ParseInt(k[:20], 10, 64)
+		feed = append(feed, time.Unix(0, nanos).Format("15:04")+" "+k[21:]+": "+all[k])
 	}
 	return feed
 }

@@ -365,7 +365,7 @@ const file_api_api_proto_rawDesc = "" +
 	"\x04user\x18\x01 \x01(\tR\x04user\"\"\n" +
 	"\bTimeline\x12\x16\n" +
 	"\x06tweets\x18\x01 \x03(\tR\x06tweets\"\a\n" +
-	"\x05Empty2\xc8\x02\n" +
+	"\x05Empty2\xf4\x02\n" +
 	"\x03Api\x12#\n" +
 	"\x06Signup\x12\r.api.Accounts\x1a\n" +
 	".api.Empty\x12-\n" +
@@ -383,7 +383,9 @@ const file_api_api_proto_rawDesc = "" +
 	"\x06Repair\x12\n" +
 	".api.Empty\x1a\n" +
 	".api.Empty\x12(\n" +
-	"\bOpenMail\x12\r.api.Username\x1a\r.api.TimelineB\x13Z\x11twitter_clone/apib\x06proto3"
+	"\bOpenMail\x12\r.api.Username\x1a\r.api.Timeline\x12*\n" +
+	"\n" +
+	"GetProfile\x12\r.api.Username\x1a\r.api.TimelineB\x13Z\x11twitter_clone/apib\x06proto3"
 
 var (
 	file_api_api_proto_rawDescOnce sync.Once
@@ -416,16 +418,18 @@ var file_api_api_proto_depIdxs = []int32{
 	3, // 5: api.Api.BurstTweet:input_type -> api.Tweets
 	6, // 6: api.Api.Repair:input_type -> api.Empty
 	4, // 7: api.Api.OpenMail:input_type -> api.Username
-	6, // 8: api.Api.Signup:output_type -> api.Empty
-	6, // 9: api.Api.SignupLeaderless:output_type -> api.Empty
-	6, // 10: api.Api.Follow:output_type -> api.Empty
-	6, // 11: api.Api.SetThreshold:output_type -> api.Empty
-	6, // 12: api.Api.SequentialTweet:output_type -> api.Empty
-	6, // 13: api.Api.BurstTweet:output_type -> api.Empty
-	6, // 14: api.Api.Repair:output_type -> api.Empty
-	5, // 15: api.Api.OpenMail:output_type -> api.Timeline
-	8, // [8:16] is the sub-list for method output_type
-	0, // [0:8] is the sub-list for method input_type
+	4, // 8: api.Api.GetProfile:input_type -> api.Username
+	6, // 9: api.Api.Signup:output_type -> api.Empty
+	6, // 10: api.Api.SignupLeaderless:output_type -> api.Empty
+	6, // 11: api.Api.Follow:output_type -> api.Empty
+	6, // 12: api.Api.SetThreshold:output_type -> api.Empty
+	6, // 13: api.Api.SequentialTweet:output_type -> api.Empty
+	6, // 14: api.Api.BurstTweet:output_type -> api.Empty
+	6, // 15: api.Api.Repair:output_type -> api.Empty
+	5, // 16: api.Api.OpenMail:output_type -> api.Timeline
+	5, // 17: api.Api.GetProfile:output_type -> api.Timeline
+	9, // [9:18] is the sub-list for method output_type
+	0, // [0:9] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

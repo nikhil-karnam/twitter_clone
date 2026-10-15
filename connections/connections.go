@@ -19,8 +19,8 @@ var Ctx = context.Background()
 
 type Mail struct {
 	User  string
-	Tweet string
 	Time  int64
+	Tweet string
 }
 
 //connects to one gRPC server by address

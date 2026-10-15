@@ -13,6 +13,7 @@ service Api {
   rpc BurstTweet(Tweets) returns (Empty);
   rpc Repair(Empty) returns (Empty);
   rpc OpenMail(Username) returns (Timeline);
+  rpc GetProfile(Username) returns (Timeline);
 }
 
 message Accounts {

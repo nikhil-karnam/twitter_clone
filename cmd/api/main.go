@@ -57,6 +57,10 @@ func (s *server) OpenMail(ctx context.Context, req *pb.Username) (*pb.Timeline, 
 	return &pb.Timeline{Tweets: functionality.OpenMail(req.User)}, nil
 }
 
+func (s *server) GetProfile(ctx context.Context, req *pb.Username) (*pb.Timeline, error) {
+	return &pb.Timeline{Tweets: functionality.GetProfile(req.User)}, nil
+}
+
 func (s *server) Repair(ctx context.Context, req *pb.Empty) (*pb.Empty, error) {
 	functionality.Repair()
 	return &pb.Empty{}, nil
