@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Api_Signup_FullMethodName = "/api.Api/Signup"
-	Api_Follow_FullMethodName = "/api.Api/Follow"
+	Api_Signup_FullMethodName   = "/api.Api/Signup"
+	Api_Follow_FullMethodName   = "/api.Api/Follow"
+	Api_GetUsers_FullMethodName = "/api.Api/GetUsers"
 )
 
 // ApiClient is the client API for Api service.
@@ -29,6 +30,7 @@ const (
 type ApiClient interface {
 	Signup(ctx context.Context, in *Accounts, opts ...grpc.CallOption) (*Empty, error)
 	Follow(ctx context.Context, in *Follows, opts ...grpc.CallOption) (*Empty, error)
+	GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
 }
 
 type apiClient struct {
@@ -59,12 +61,23 @@ func (c *apiClient) Follow(ctx context.Context, in *Follows, opts ...grpc.CallOp
 	return out, nil
 }
 
+func (c *apiClient) GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Users)
+	err := c.cc.Invoke(ctx, Api_GetUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ApiServer is the server API for Api service.
 // All implementations must embed UnimplementedApiServer
 // for forward compatibility.
 type ApiServer interface {
 	Signup(context.Context, *Accounts) (*Empty, error)
 	Follow(context.Context, *Follows) (*Empty, error)
+	GetUsers(context.Context, *Empty) (*Users, error)
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedApiServer) Signup(context.Context, *Accounts) (*Empty, error)
 }
 func (UnimplementedApiServer) Follow(context.Context, *Follows) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method Follow not implemented")
+}
+func (UnimplementedApiServer) GetUsers(context.Context, *Empty) (*Users, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUsers not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 func (UnimplementedApiServer) testEmbeddedByValue()             {}
@@ -138,6 +154,24 @@ func _Api_Follow_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Api_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).GetUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Api_GetUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).GetUsers(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Follow",
 			Handler:    _Api_Follow_Handler,
+		},
+		{
+			MethodName: "GetUsers",
+			Handler:    _Api_GetUsers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -7,6 +7,7 @@ option go_package = "twitter_clone/api";
 service Api {
   rpc Signup(Accounts) returns (Empty);
   rpc Follow(Follows) returns (Empty);
+  rpc GetUsers(Empty) returns (Users);
 }
 
 message Accounts {
@@ -16,5 +17,8 @@ message Accounts {
 message Follows {
   repeated string users = 1;
   repeated string targets = 2;
+}
+message Users {
+  repeated string users = 1;
 }
 message Empty {}

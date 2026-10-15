@@ -24,6 +24,10 @@ func (s *server) Follow(ctx context.Context, req *pb.Follows) (*pb.Empty, error)
 	return &pb.Empty{}, nil
 }
 
+func (s *server) GetUsers(ctx context.Context, req *pb.Empty) (*pb.Users, error) {
+	return &pb.Users{Users: functionality.GetUsers()}, nil
+}
+
 func main() {
 	lis, _ := net.Listen("tcp", ":50051")
 	s := grpc.NewServer()

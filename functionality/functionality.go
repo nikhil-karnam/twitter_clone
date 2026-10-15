@@ -150,6 +150,18 @@ func IsCeleb(user string) bool {
 	return GetFollowerCount(user) >= 1000
 }
 
+func GetUsers() []string {
+	var users []string
+	rows, _ := connections.Mysql.Query("SELECT username FROM users")
+	for rows.Next() {
+		var user string
+		rows.Scan(&user)
+		users = append(users, user)
+	}
+	rows.Close()
+	return users
+}
+
 func GetFollowers(user string) []string {
 	var followers []string
 	rows, _ := connections.Mysql.Query("SELECT user FROM follows WHERE target = ?", user)
