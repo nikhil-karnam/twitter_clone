@@ -45,12 +45,16 @@ function App() {
           <label>Amount: <input style={{ width: 80 }} type="number" value={followAmount} onChange={(e) => setFollowAmount(e.target.value)} /></label>{" "}
           <button onClick={() => fetch(url + "follow?amount=" + followAmount)}>Follow</button>
         </div>
-        <button onClick={() => fetch(url + "tweet?userType=" + (userType === 1 ? "celebs" : "randos") + "&burstMode=" + (burstMode === 1))}>Tweet</button>
       </div>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 20, marginTop: 60 }}>
-        <Panel options={userTypes} selected={userType} onSelect={setUserType} />
-        <Panel options={burstModes} selected={burstMode} onSelect={setBurstMode} />
-        <Panel options={fanoutModes} selected={fanoutMode} onSelect={changeFanoutMode} />
+      <div style={{ display: "flex", justifyContent: "center", gap: 40, marginTop: 40 }}>
+        <div>
+          <button onClick={() => fetch(url + "tweet?userType=" + (userType === 1 ? "celebs" : "randos") + "&burstMode=" + (burstMode === 1))}>Tweet</button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Panel options={userTypes} selected={userType} onSelect={setUserType} />
+          <Panel options={burstModes} selected={burstMode} onSelect={setBurstMode} />
+          <Panel options={fanoutModes} selected={fanoutMode} onSelect={changeFanoutMode} />
+        </div>
       </div>
     </div>
   );
