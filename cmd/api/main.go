@@ -15,8 +15,14 @@ type server struct {
 	pb.UnimplementedApiServer
 }
 
+//setters
 func (s *server) Signup(ctx context.Context, req *pb.Accounts) (*pb.Empty, error) {
 	functionality.SignupBatch(req.Users, req.Emails)
+	return &pb.Empty{}, nil
+}
+
+func (s *server) SignupLeaderless(ctx context.Context, req *pb.Accounts) (*pb.Empty, error) {
+	functionality.SignupLeaderless(req.Users, req.Emails)
 	return &pb.Empty{}, nil
 }
 
@@ -30,6 +36,7 @@ func (s *server) SetThreshold(ctx context.Context, req *pb.Threshold) (*pb.Empty
 	return &pb.Empty{}, nil
 }
 
+//testers
 func (s *server) SequentialTweet(ctx context.Context, req *pb.Tweets) (*pb.Empty, error) {
 	for i := range req.Users {
 		functionality.Tweet(req.Users[i], req.Tweets[i])
@@ -46,32 +53,14 @@ func (s *server) BurstTweet(ctx context.Context, req *pb.Tweets) (*pb.Empty, err
 	return &pb.Empty{}, nil
 }
 
-func (s *server) Repair(ctx context.Context, req *pb.Empty) (*pb.Empty, error) {
-	functionality.Repair()
-	return &pb.Empty{}, nil
-}
-
-//getters
-func (s *server) GetUsers(ctx context.Context, req *pb.Empty) (*pb.Users, error) {
-	return &pb.Users{Users: functionality.GetUsers()}, nil
-}
-
-func (s *server) GetCelebs(ctx context.Context, req *pb.Empty) (*pb.Users, error) {
-	return &pb.Users{Users: functionality.GetCelebs()}, nil
-}
-
-func (s *server) GetRandos(ctx context.Context, req *pb.Empty) (*pb.Users, error) {
-	return &pb.Users{Users: functionality.GetRandos()}, nil
-}
-
 func (s *server) OpenMail(ctx context.Context, req *pb.Username) (*pb.Timeline, error) {
 	return &pb.Timeline{Tweets: functionality.OpenMail(req.User)}, nil
 }
 
-func (s *server) GetProfile(ctx context.Context, req *pb.Username) (*pb.Timeline, error) {
-	return &pb.Timeline{Tweets: functionality.GetProfile(req.User)}, nil
+func (s *server) Repair(ctx context.Context, req *pb.Empty) (*pb.Empty, error) {
+	functionality.Repair()
+	return &pb.Empty{}, nil
 }
-
 
 func main() {
 	lis, _ := net.Listen("tcp", ":50051")

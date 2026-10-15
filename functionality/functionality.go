@@ -35,12 +35,16 @@ func SignupBatch(users, emails []string) bool {
 }
 
 //just to see if its faster than leader-based
-func SignupLeaderless(user, email string) bool {
+func SignupLeaderless(users, emails []string) bool {
 	//blind write to all 3, no check, like a Cassandra INSERT
+	var kvs []*pb.KV
+	for i := range users {
+		kvs = append(kvs, &pb.KV{Key: []byte("email:" + emails[i]), Value: []byte(users[i])})
+	}
 	done := make(chan bool, 3)
 	for _, db := range connections.Tweets {
 		go func(db pb.TweetsClient) {
-			db.Put(connections.Ctx, &pb.PutRequest{Key: []byte("email:" + email), Value: []byte(user), Sync: true})
+			db.PutBatch(connections.Ctx, &pb.PutBatchRequest{Kvs: kvs})
 			done <- true
 		}(db)
 	}
@@ -78,7 +82,7 @@ func Tweet(user, tweet string) {
 		go func(db pb.TweetsClient) {
 			_, err := db.Put(connections.Ctx, &pb.PutRequest{
 				Key:   []byte(user + ":" + fmt.Sprintf("%020d", now.UnixNano())),
-				Value: []byte(tweet), Sync: true,
+				Value: []byte(tweet),
 			})
 			results <- err
 		}(db)
@@ -132,10 +136,6 @@ func Repair() {
 }
 
 //getters
-func PrintTime(nanos int64) {
-	fmt.Print(time.Unix(0, nanos).Format("15:04"), " ")
-}
-
 func UserExists(user string) bool {
 	var n int
 	connections.Mysql.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", user).Scan(&n)
@@ -150,42 +150,6 @@ func GetFollowerCount(user string) int {
 
 func IsCeleb(user string) bool {
 	return GetFollowerCount(user) >= CelebThreshold
-}
-
-func GetUsers() []string {
-	var users []string
-	rows, _ := connections.Mysql.Query("SELECT username FROM users")
-	for rows.Next() {
-		var user string
-		rows.Scan(&user)
-		users = append(users, user)
-	}
-	rows.Close()
-	return users
-}
-
-func GetCelebs() []string {
-	var celebs []string
-	rows, _ := connections.Mysql.Query("SELECT username FROM users WHERE follower_count >= ?", CelebThreshold)
-	for rows.Next() {
-		var celeb string
-		rows.Scan(&celeb)
-		celebs = append(celebs, celeb)
-	}
-	rows.Close()
-	return celebs
-}
-
-func GetRandos() []string {
-	var randos []string
-	rows, _ := connections.Mysql.Query("SELECT username FROM users WHERE follower_count < ?", CelebThreshold)
-	for rows.Next() {
-		var rando string
-		rows.Scan(&rando)
-		randos = append(randos, rando)
-	}
-	rows.Close()
-	return randos
 }
 
 func GetFollowers(user string) []string {

@@ -18,11 +18,7 @@ type server struct {
 }
 
 func (s *server) Put(ctx context.Context, req *pb.PutRequest) (*pb.PutReply, error) {
-	mode := pebble.NoSync
-	if req.Sync {
-		mode = pebble.Sync
-	}
-	return &pb.PutReply{}, s.db.Set(req.Key, req.Value, mode)
+	return &pb.PutReply{}, s.db.Set(req.Key, req.Value, pebble.Sync)
 }
 
 func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetReply, error) {

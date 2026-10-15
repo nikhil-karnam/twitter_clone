@@ -25,7 +25,6 @@ type PutRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Key           []byte                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	Value         []byte                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	Sync          bool                   `protobuf:"varint,3,opt,name=sync,proto3" json:"sync,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -72,13 +71,6 @@ func (x *PutRequest) GetValue() []byte {
 		return x.Value
 	}
 	return nil
-}
-
-func (x *PutRequest) GetSync() bool {
-	if x != nil {
-		return x.Sync
-	}
-	return false
 }
 
 type PutReply struct {
@@ -417,12 +409,11 @@ var File_tweets_tweets_proto protoreflect.FileDescriptor
 
 const file_tweets_tweets_proto_rawDesc = "" +
 	"\n" +
-	"\x13tweets/tweets.proto\x12\x06tweets\"H\n" +
+	"\x13tweets/tweets.proto\x12\x06tweets\"4\n" +
 	"\n" +
 	"PutRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\fR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\fR\x05value\x12\x12\n" +
-	"\x04sync\x18\x03 \x01(\bR\x04sync\"\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value\"\n" +
 	"\n" +
 	"\bPutReply\"\x1e\n" +
 	"\n" +

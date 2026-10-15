@@ -19,17 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Api_Signup_FullMethodName          = "/api.Api/Signup"
-	Api_Follow_FullMethodName          = "/api.Api/Follow"
-	Api_SetThreshold_FullMethodName    = "/api.Api/SetThreshold"
-	Api_SequentialTweet_FullMethodName = "/api.Api/SequentialTweet"
-	Api_BurstTweet_FullMethodName      = "/api.Api/BurstTweet"
-	Api_Repair_FullMethodName          = "/api.Api/Repair"
-	Api_GetUsers_FullMethodName        = "/api.Api/GetUsers"
-	Api_GetCelebs_FullMethodName       = "/api.Api/GetCelebs"
-	Api_GetRandos_FullMethodName       = "/api.Api/GetRandos"
-	Api_OpenMail_FullMethodName        = "/api.Api/OpenMail"
-	Api_GetProfile_FullMethodName      = "/api.Api/GetProfile"
+	Api_Signup_FullMethodName           = "/api.Api/Signup"
+	Api_SignupLeaderless_FullMethodName = "/api.Api/SignupLeaderless"
+	Api_Follow_FullMethodName           = "/api.Api/Follow"
+	Api_SetThreshold_FullMethodName     = "/api.Api/SetThreshold"
+	Api_SequentialTweet_FullMethodName  = "/api.Api/SequentialTweet"
+	Api_BurstTweet_FullMethodName       = "/api.Api/BurstTweet"
+	Api_Repair_FullMethodName           = "/api.Api/Repair"
+	Api_OpenMail_FullMethodName         = "/api.Api/OpenMail"
 )
 
 // ApiClient is the client API for Api service.
@@ -37,16 +34,13 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ApiClient interface {
 	Signup(ctx context.Context, in *Accounts, opts ...grpc.CallOption) (*Empty, error)
+	SignupLeaderless(ctx context.Context, in *Accounts, opts ...grpc.CallOption) (*Empty, error)
 	Follow(ctx context.Context, in *Follows, opts ...grpc.CallOption) (*Empty, error)
 	SetThreshold(ctx context.Context, in *Threshold, opts ...grpc.CallOption) (*Empty, error)
 	SequentialTweet(ctx context.Context, in *Tweets, opts ...grpc.CallOption) (*Empty, error)
 	BurstTweet(ctx context.Context, in *Tweets, opts ...grpc.CallOption) (*Empty, error)
 	Repair(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
-	GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
-	GetCelebs(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
-	GetRandos(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
 	OpenMail(ctx context.Context, in *Username, opts ...grpc.CallOption) (*Timeline, error)
-	GetProfile(ctx context.Context, in *Username, opts ...grpc.CallOption) (*Timeline, error)
 }
 
 type apiClient struct {
@@ -61,6 +55,16 @@ func (c *apiClient) Signup(ctx context.Context, in *Accounts, opts ...grpc.CallO
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, Api_Signup_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *apiClient) SignupLeaderless(ctx context.Context, in *Accounts, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Api_SignupLeaderless_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,50 +121,10 @@ func (c *apiClient) Repair(ctx context.Context, in *Empty, opts ...grpc.CallOpti
 	return out, nil
 }
 
-func (c *apiClient) GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Users)
-	err := c.cc.Invoke(ctx, Api_GetUsers_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *apiClient) GetCelebs(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Users)
-	err := c.cc.Invoke(ctx, Api_GetCelebs_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *apiClient) GetRandos(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Users)
-	err := c.cc.Invoke(ctx, Api_GetRandos_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *apiClient) OpenMail(ctx context.Context, in *Username, opts ...grpc.CallOption) (*Timeline, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Timeline)
 	err := c.cc.Invoke(ctx, Api_OpenMail_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *apiClient) GetProfile(ctx context.Context, in *Username, opts ...grpc.CallOption) (*Timeline, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Timeline)
-	err := c.cc.Invoke(ctx, Api_GetProfile_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -172,16 +136,13 @@ func (c *apiClient) GetProfile(ctx context.Context, in *Username, opts ...grpc.C
 // for forward compatibility.
 type ApiServer interface {
 	Signup(context.Context, *Accounts) (*Empty, error)
+	SignupLeaderless(context.Context, *Accounts) (*Empty, error)
 	Follow(context.Context, *Follows) (*Empty, error)
 	SetThreshold(context.Context, *Threshold) (*Empty, error)
 	SequentialTweet(context.Context, *Tweets) (*Empty, error)
 	BurstTweet(context.Context, *Tweets) (*Empty, error)
 	Repair(context.Context, *Empty) (*Empty, error)
-	GetUsers(context.Context, *Empty) (*Users, error)
-	GetCelebs(context.Context, *Empty) (*Users, error)
-	GetRandos(context.Context, *Empty) (*Users, error)
 	OpenMail(context.Context, *Username) (*Timeline, error)
-	GetProfile(context.Context, *Username) (*Timeline, error)
 	mustEmbedUnimplementedApiServer()
 }
 
@@ -194,6 +155,9 @@ type UnimplementedApiServer struct{}
 
 func (UnimplementedApiServer) Signup(context.Context, *Accounts) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method Signup not implemented")
+}
+func (UnimplementedApiServer) SignupLeaderless(context.Context, *Accounts) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method SignupLeaderless not implemented")
 }
 func (UnimplementedApiServer) Follow(context.Context, *Follows) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method Follow not implemented")
@@ -210,20 +174,8 @@ func (UnimplementedApiServer) BurstTweet(context.Context, *Tweets) (*Empty, erro
 func (UnimplementedApiServer) Repair(context.Context, *Empty) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method Repair not implemented")
 }
-func (UnimplementedApiServer) GetUsers(context.Context, *Empty) (*Users, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetUsers not implemented")
-}
-func (UnimplementedApiServer) GetCelebs(context.Context, *Empty) (*Users, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetCelebs not implemented")
-}
-func (UnimplementedApiServer) GetRandos(context.Context, *Empty) (*Users, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetRandos not implemented")
-}
 func (UnimplementedApiServer) OpenMail(context.Context, *Username) (*Timeline, error) {
 	return nil, status.Error(codes.Unimplemented, "method OpenMail not implemented")
-}
-func (UnimplementedApiServer) GetProfile(context.Context, *Username) (*Timeline, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetProfile not implemented")
 }
 func (UnimplementedApiServer) mustEmbedUnimplementedApiServer() {}
 func (UnimplementedApiServer) testEmbeddedByValue()             {}
@@ -260,6 +212,24 @@ func _Api_Signup_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ApiServer).Signup(ctx, req.(*Accounts))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Api_SignupLeaderless_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Accounts)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).SignupLeaderless(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Api_SignupLeaderless_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).SignupLeaderless(ctx, req.(*Accounts))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -354,60 +324,6 @@ func _Api_Repair_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Api_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ApiServer).GetUsers(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Api_GetUsers_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ApiServer).GetUsers(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Api_GetCelebs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ApiServer).GetCelebs(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Api_GetCelebs_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ApiServer).GetCelebs(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Api_GetRandos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ApiServer).GetRandos(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Api_GetRandos_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ApiServer).GetRandos(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Api_OpenMail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Username)
 	if err := dec(in); err != nil {
@@ -426,24 +342,6 @@ func _Api_OpenMail_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Api_GetProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Username)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ApiServer).GetProfile(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Api_GetProfile_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ApiServer).GetProfile(ctx, req.(*Username))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Api_ServiceDesc is the grpc.ServiceDesc for Api service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -454,6 +352,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Signup",
 			Handler:    _Api_Signup_Handler,
+		},
+		{
+			MethodName: "SignupLeaderless",
+			Handler:    _Api_SignupLeaderless_Handler,
 		},
 		{
 			MethodName: "Follow",
@@ -476,24 +378,8 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Api_Repair_Handler,
 		},
 		{
-			MethodName: "GetUsers",
-			Handler:    _Api_GetUsers_Handler,
-		},
-		{
-			MethodName: "GetCelebs",
-			Handler:    _Api_GetCelebs_Handler,
-		},
-		{
-			MethodName: "GetRandos",
-			Handler:    _Api_GetRandos_Handler,
-		},
-		{
 			MethodName: "OpenMail",
 			Handler:    _Api_OpenMail_Handler,
-		},
-		{
-			MethodName: "GetProfile",
-			Handler:    _Api_GetProfile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
