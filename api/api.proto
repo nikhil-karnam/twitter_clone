@@ -8,6 +8,7 @@ service Api {
   rpc Signup(Accounts) returns (Empty);
   rpc Follow(Follows) returns (Empty);
   rpc GetUsers(Empty) returns (Users);
+  rpc SetThreshold(Threshold) returns (Empty);
 }
 
 message Accounts {
@@ -20,5 +21,8 @@ message Follows {
 }
 message Users {
   repeated string users = 1;
+}
+message Threshold {
+  int64 value = 1;
 }
 message Empty {}

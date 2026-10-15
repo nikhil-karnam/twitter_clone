@@ -146,8 +146,10 @@ func GetFollowerCount(user string) int {
 	return count
 }
 
+var CelebThreshold = 1000
+
 func IsCeleb(user string) bool {
-	return GetFollowerCount(user) >= 1000
+	return GetFollowerCount(user) >= CelebThreshold
 }
 
 func GetUsers() []string {

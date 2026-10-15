@@ -169,6 +169,50 @@ func (x *Users) GetUsers() []string {
 	return nil
 }
 
+type Threshold struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Value         int64                  `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Threshold) Reset() {
+	*x = Threshold{}
+	mi := &file_api_api_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Threshold) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Threshold) ProtoMessage() {}
+
+func (x *Threshold) ProtoReflect() protoreflect.Message {
+	mi := &file_api_api_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Threshold.ProtoReflect.Descriptor instead.
+func (*Threshold) Descriptor() ([]byte, []int) {
+	return file_api_api_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Threshold) GetValue() int64 {
+	if x != nil {
+		return x.Value
+	}
+	return 0
+}
+
 type Empty struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -177,7 +221,7 @@ type Empty struct {
 
 func (x *Empty) Reset() {
 	*x = Empty{}
-	mi := &file_api_api_proto_msgTypes[3]
+	mi := &file_api_api_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -189,7 +233,7 @@ func (x *Empty) String() string {
 func (*Empty) ProtoMessage() {}
 
 func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_api_api_proto_msgTypes[3]
+	mi := &file_api_api_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -202,7 +246,7 @@ func (x *Empty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Empty.ProtoReflect.Descriptor instead.
 func (*Empty) Descriptor() ([]byte, []int) {
-	return file_api_api_proto_rawDescGZIP(), []int{3}
+	return file_api_api_proto_rawDescGZIP(), []int{4}
 }
 
 var File_api_api_proto protoreflect.FileDescriptor
@@ -217,8 +261,10 @@ const file_api_api_proto_rawDesc = "" +
 	"\x05users\x18\x01 \x03(\tR\x05users\x12\x18\n" +
 	"\atargets\x18\x02 \x03(\tR\atargets\"\x1d\n" +
 	"\x05Users\x12\x14\n" +
-	"\x05users\x18\x01 \x03(\tR\x05users\"\a\n" +
-	"\x05Empty2r\n" +
+	"\x05users\x18\x01 \x03(\tR\x05users\"!\n" +
+	"\tThreshold\x12\x14\n" +
+	"\x05value\x18\x01 \x01(\x03R\x05value\"\a\n" +
+	"\x05Empty2\x9e\x01\n" +
 	"\x03Api\x12#\n" +
 	"\x06Signup\x12\r.api.Accounts\x1a\n" +
 	".api.Empty\x12\"\n" +
@@ -226,7 +272,9 @@ const file_api_api_proto_rawDesc = "" +
 	".api.Empty\x12\"\n" +
 	"\bGetUsers\x12\n" +
 	".api.Empty\x1a\n" +
-	".api.UsersB\x13Z\x11twitter_clone/apib\x06proto3"
+	".api.Users\x12*\n" +
+	"\fSetThreshold\x12\x0e.api.Threshold\x1a\n" +
+	".api.EmptyB\x13Z\x11twitter_clone/apib\x06proto3"
 
 var (
 	file_api_api_proto_rawDescOnce sync.Once
@@ -240,22 +288,25 @@ func file_api_api_proto_rawDescGZIP() []byte {
 	return file_api_api_proto_rawDescData
 }
 
-var file_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_api_api_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_api_api_proto_goTypes = []any{
-	(*Accounts)(nil), // 0: api.Accounts
-	(*Follows)(nil),  // 1: api.Follows
-	(*Users)(nil),    // 2: api.Users
-	(*Empty)(nil),    // 3: api.Empty
+	(*Accounts)(nil),  // 0: api.Accounts
+	(*Follows)(nil),   // 1: api.Follows
+	(*Users)(nil),     // 2: api.Users
+	(*Threshold)(nil), // 3: api.Threshold
+	(*Empty)(nil),     // 4: api.Empty
 }
 var file_api_api_proto_depIdxs = []int32{
 	0, // 0: api.Api.Signup:input_type -> api.Accounts
 	1, // 1: api.Api.Follow:input_type -> api.Follows
-	3, // 2: api.Api.GetUsers:input_type -> api.Empty
-	3, // 3: api.Api.Signup:output_type -> api.Empty
-	3, // 4: api.Api.Follow:output_type -> api.Empty
-	2, // 5: api.Api.GetUsers:output_type -> api.Users
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	4, // 2: api.Api.GetUsers:input_type -> api.Empty
+	3, // 3: api.Api.SetThreshold:input_type -> api.Threshold
+	4, // 4: api.Api.Signup:output_type -> api.Empty
+	4, // 5: api.Api.Follow:output_type -> api.Empty
+	2, // 6: api.Api.GetUsers:output_type -> api.Users
+	4, // 7: api.Api.SetThreshold:output_type -> api.Empty
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -272,7 +323,7 @@ func file_api_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_api_proto_rawDesc), len(file_api_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

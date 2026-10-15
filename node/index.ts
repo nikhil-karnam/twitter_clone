@@ -35,4 +35,5 @@ export async function handler(event: any) {
   if (event.rawPath === "/signup-randos") await signup("user", count);
   if (event.rawPath === "/signup-celebs") await signup("celeb", count);
   if (event.rawPath === "/follow") await follow(count);
+  if (event.rawPath === "/threshold") await new Promise((done) => api.SetThreshold({ value: Number(event.queryStringParameters.value) }, done));
 }

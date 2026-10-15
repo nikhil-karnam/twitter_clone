@@ -34,3 +34,8 @@ func main() {
 	pb.RegisterApiServer(s, &server{})
 	s.Serve(lis)
 }
+
+func (s *server) SetThreshold(ctx context.Context, req *pb.Threshold) (*pb.Empty, error) {
+	functionality.CelebThreshold = int(req.Value)
+	return &pb.Empty{}, nil
+}
