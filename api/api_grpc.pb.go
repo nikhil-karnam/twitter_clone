@@ -24,6 +24,7 @@ const (
 	Api_SetThreshold_FullMethodName    = "/api.Api/SetThreshold"
 	Api_SequentialTweet_FullMethodName = "/api.Api/SequentialTweet"
 	Api_BurstTweet_FullMethodName      = "/api.Api/BurstTweet"
+	Api_Repair_FullMethodName          = "/api.Api/Repair"
 	Api_GetUsers_FullMethodName        = "/api.Api/GetUsers"
 	Api_GetCelebs_FullMethodName       = "/api.Api/GetCelebs"
 	Api_GetRandos_FullMethodName       = "/api.Api/GetRandos"
@@ -40,6 +41,7 @@ type ApiClient interface {
 	SetThreshold(ctx context.Context, in *Threshold, opts ...grpc.CallOption) (*Empty, error)
 	SequentialTweet(ctx context.Context, in *Tweets, opts ...grpc.CallOption) (*Empty, error)
 	BurstTweet(ctx context.Context, in *Tweets, opts ...grpc.CallOption) (*Empty, error)
+	Repair(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
 	GetCelebs(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
 	GetRandos(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error)
@@ -105,6 +107,16 @@ func (c *apiClient) BurstTweet(ctx context.Context, in *Tweets, opts ...grpc.Cal
 	return out, nil
 }
 
+func (c *apiClient) Repair(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Api_Repair_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *apiClient) GetUsers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Users, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Users)
@@ -164,6 +176,7 @@ type ApiServer interface {
 	SetThreshold(context.Context, *Threshold) (*Empty, error)
 	SequentialTweet(context.Context, *Tweets) (*Empty, error)
 	BurstTweet(context.Context, *Tweets) (*Empty, error)
+	Repair(context.Context, *Empty) (*Empty, error)
 	GetUsers(context.Context, *Empty) (*Users, error)
 	GetCelebs(context.Context, *Empty) (*Users, error)
 	GetRandos(context.Context, *Empty) (*Users, error)
@@ -193,6 +206,9 @@ func (UnimplementedApiServer) SequentialTweet(context.Context, *Tweets) (*Empty,
 }
 func (UnimplementedApiServer) BurstTweet(context.Context, *Tweets) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method BurstTweet not implemented")
+}
+func (UnimplementedApiServer) Repair(context.Context, *Empty) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method Repair not implemented")
 }
 func (UnimplementedApiServer) GetUsers(context.Context, *Empty) (*Users, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUsers not implemented")
@@ -320,6 +336,24 @@ func _Api_BurstTweet_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Api_Repair_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).Repair(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Api_Repair_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).Repair(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Api_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
@@ -436,6 +470,10 @@ var Api_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BurstTweet",
 			Handler:    _Api_BurstTweet_Handler,
+		},
+		{
+			MethodName: "Repair",
+			Handler:    _Api_Repair_Handler,
 		},
 		{
 			MethodName: "GetUsers",

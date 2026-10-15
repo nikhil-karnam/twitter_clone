@@ -411,7 +411,7 @@ const file_api_api_proto_rawDesc = "" +
 	"\x04user\x18\x01 \x01(\tR\x04user\"\"\n" +
 	"\bTimeline\x12\x16\n" +
 	"\x06tweets\x18\x01 \x03(\tR\x06tweets\"\a\n" +
-	"\x05Empty2\x91\x03\n" +
+	"\x05Empty2\xb3\x03\n" +
 	"\x03Api\x12#\n" +
 	"\x06Signup\x12\r.api.Accounts\x1a\n" +
 	".api.Empty\x12\"\n" +
@@ -423,6 +423,9 @@ const file_api_api_proto_rawDesc = "" +
 	".api.Empty\x12%\n" +
 	"\n" +
 	"BurstTweet\x12\v.api.Tweets\x1a\n" +
+	".api.Empty\x12 \n" +
+	"\x06Repair\x12\n" +
+	".api.Empty\x1a\n" +
 	".api.Empty\x12\"\n" +
 	"\bGetUsers\x12\n" +
 	".api.Empty\x1a\n" +
@@ -466,23 +469,25 @@ var file_api_api_proto_depIdxs = []int32{
 	3,  // 2: api.Api.SetThreshold:input_type -> api.Threshold
 	4,  // 3: api.Api.SequentialTweet:input_type -> api.Tweets
 	4,  // 4: api.Api.BurstTweet:input_type -> api.Tweets
-	7,  // 5: api.Api.GetUsers:input_type -> api.Empty
-	7,  // 6: api.Api.GetCelebs:input_type -> api.Empty
-	7,  // 7: api.Api.GetRandos:input_type -> api.Empty
-	5,  // 8: api.Api.OpenMail:input_type -> api.Username
-	5,  // 9: api.Api.GetProfile:input_type -> api.Username
-	7,  // 10: api.Api.Signup:output_type -> api.Empty
-	7,  // 11: api.Api.Follow:output_type -> api.Empty
-	7,  // 12: api.Api.SetThreshold:output_type -> api.Empty
-	7,  // 13: api.Api.SequentialTweet:output_type -> api.Empty
-	7,  // 14: api.Api.BurstTweet:output_type -> api.Empty
-	2,  // 15: api.Api.GetUsers:output_type -> api.Users
-	2,  // 16: api.Api.GetCelebs:output_type -> api.Users
-	2,  // 17: api.Api.GetRandos:output_type -> api.Users
-	6,  // 18: api.Api.OpenMail:output_type -> api.Timeline
-	6,  // 19: api.Api.GetProfile:output_type -> api.Timeline
-	10, // [10:20] is the sub-list for method output_type
-	0,  // [0:10] is the sub-list for method input_type
+	7,  // 5: api.Api.Repair:input_type -> api.Empty
+	7,  // 6: api.Api.GetUsers:input_type -> api.Empty
+	7,  // 7: api.Api.GetCelebs:input_type -> api.Empty
+	7,  // 8: api.Api.GetRandos:input_type -> api.Empty
+	5,  // 9: api.Api.OpenMail:input_type -> api.Username
+	5,  // 10: api.Api.GetProfile:input_type -> api.Username
+	7,  // 11: api.Api.Signup:output_type -> api.Empty
+	7,  // 12: api.Api.Follow:output_type -> api.Empty
+	7,  // 13: api.Api.SetThreshold:output_type -> api.Empty
+	7,  // 14: api.Api.SequentialTweet:output_type -> api.Empty
+	7,  // 15: api.Api.BurstTweet:output_type -> api.Empty
+	7,  // 16: api.Api.Repair:output_type -> api.Empty
+	2,  // 17: api.Api.GetUsers:output_type -> api.Users
+	2,  // 18: api.Api.GetCelebs:output_type -> api.Users
+	2,  // 19: api.Api.GetRandos:output_type -> api.Users
+	6,  // 20: api.Api.OpenMail:output_type -> api.Timeline
+	6,  // 21: api.Api.GetProfile:output_type -> api.Timeline
+	11, // [11:22] is the sub-list for method output_type
+	0,  // [0:11] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

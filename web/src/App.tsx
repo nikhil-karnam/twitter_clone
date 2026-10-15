@@ -49,6 +49,9 @@ function App() {
           <Panel options={burstModes} selected={burstMode} onSelect={setBurstMode} />
           <Panel options={fanoutModes} selected={fanoutMode} onSelect={(i) => { setFanoutMode(i); fetch(url + "threshold?threshold=" + thresholds[i]); }} />
         </div>
+        <div>
+          <button onClick={() => fetch(url + "repair")}>Repair</button>
+        </div>
       </div>
       <div className="row tight">
         <label>Username: <input className="username" value={username} onChange={(e) => setUsername(e.target.value)} /></label>

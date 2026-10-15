@@ -38,6 +38,10 @@ async function tweet(userType: string, burstMode: boolean) {
   await new Promise((done) => api[method]({ users, tweets }, done));
 }
 
+async function repair() {
+  await new Promise((done) => api.Repair({}, done));
+}
+
 //getters
 function getUsers(): Promise<string[]> {
   return new Promise((done) => api.GetUsers({}, (err: any, res: any) => done(res.users)));
@@ -64,6 +68,8 @@ export async function handler(event: any) {
   if (event.rawPath === "/follow") await follow(Number(event.queryStringParameters.amount));
   if (event.rawPath === "/threshold") await setThreshold(Number(event.queryStringParameters.threshold));
   if (event.rawPath === "/tweet") await tweet(event.queryStringParameters.userType, event.queryStringParameters.burstMode === "true");
+  if (event.rawPath === "/repair") await repair();
+
   if (event.rawPath === "/feed") return await openMail(event.queryStringParameters.user);
   if (event.rawPath === "/profile") return await getProfile(event.queryStringParameters.user);
 }

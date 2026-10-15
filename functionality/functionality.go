@@ -96,7 +96,7 @@ func Tweet(user, tweet string) {
 	}
 }
 
-func Reconcile() {
+func Repair() {
 	//using an in memory map to save repeated reads to the disk
 	all := map[string][]byte{}
 	var ramCopies [3]map[string]bool

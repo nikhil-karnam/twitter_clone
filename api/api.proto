@@ -10,6 +10,7 @@ service Api {
   rpc SetThreshold(Threshold) returns (Empty);
   rpc SequentialTweet(Tweets) returns (Empty);
   rpc BurstTweet(Tweets) returns (Empty);
+  rpc Repair(Empty) returns (Empty);
 
   rpc GetUsers(Empty) returns (Users);
   rpc GetCelebs(Empty) returns (Users);
