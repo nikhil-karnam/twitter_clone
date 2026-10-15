@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+const modes = ["Mail to nobody", "Hybrid", "Mail to everybody"];
 const thresholds = [0, 1000, 1e9];
 
 function App() {
@@ -30,14 +31,17 @@ function App() {
           <button onClick={() => fetch(url + "follow?count=" + follows)}>Follow</button>
         </div>
       </div>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <div style={{ width: 360 }}>
-          <input style={{ width: "100%" }} type="range" min={0} max={2} step={1} value={mode} onChange={(e) => changeMode(Number(e.target.value))} />
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Mail to nobody</span>
-            <span>Hybrid</span>
-            <span>Mail to everybody</span>
-          </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 60 }}>
+        <div style={{ display: "flex", border: "1px solid #888", borderRadius: 6, overflow: "hidden" }}>
+          {modes.map((name, i) => (
+            <button
+              key={name}
+              onClick={() => changeMode(i)}
+              style={{ border: "none", borderRadius: 0, padding: "6px 12px", background: mode === i ? "#646cff" : "transparent", color: mode === i ? "white" : "inherit" }}
+            >
+              {name}
+            </button>
+          ))}
         </div>
       </div>
     </div>
